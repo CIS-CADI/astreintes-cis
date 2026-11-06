@@ -3,7 +3,7 @@
 Application web des sapeurs-pompiers du CIS Cadillac-Béguey : disponibilités d'astreinte par créneau,
 manœuvre & ménage, astreinte GIPSI, entretien du samedi, inventaire des véhicules et synthèse SOG.
 
-- **Adresse de l'appli :** voir l'onglet *About* du dépôt (GitHub Pages).
+- **Adresse de l'appli :** https://cis-cadi.github.io/astreintes-cis/
 - **Sur téléphone :** ouvrir l'adresse puis l'ajouter à l'écran d'accueil.
 - **Connexion :** identifiant `nom.initiale` (ex. `dumas.s`), mot de passe initial `1234` à changer à la première connexion.
 
