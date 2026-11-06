@@ -1,5 +1,5 @@
 // Mise à jour automatique : le réseau d'abord, le cache seulement hors connexion.
-const CACHE = 'astreintes-v1';
+const CACHE = 'astreintes-v2';
 const FICHIERS = ['./', './index.html', './config.js', './manifest.webmanifest', './icon-192.png'];
 self.addEventListener('install', e => { self.skipWaiting(); e.waitUntil(caches.open(CACHE).then(c => c.addAll(FICHIERS)).catch(() => {})); });
 self.addEventListener('activate', e => e.waitUntil(
