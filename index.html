@@ -779,7 +779,13 @@ function teamAgents(s){ return data.agents.filter(a => a.actif !== false && inTe
 function activeAgents(){ return data.agents.filter(a => a.id !== 99 && a.actif !== false); }
 function semaineById(id){ return data.semaines.find(s => s.id == id); }
 function sortedSemaines(list){ return list.slice().sort((a,b) => a.debut.localeCompare(b.debut)); }
-function defaultSemaine(list){ const t = todayISO(); return list.find(s => s.fin >= t) || list[list.length-1]; }
+// Astreinte : du vendredi 4h au vendredi suivant 4h (relève à 4h du matin)
+function semStart(s){ return new Date(s.debut + 'T04:00:00'); }
+function semEnd(s){ return new Date(s.fin + 'T04:00:00'); }
+function semEnCours(s){ const n = new Date(); return semStart(s) <= n && n < semEnd(s); }
+function semFinie(s){ return semEnd(s) <= new Date(); }
+function semPeriode(s){ return `${frDate(s.debut)} 4h → ${frDate(s.fin)} 4h`; }
+function defaultSemaine(list){ return list.find(s => !semFinie(s)) || list[list.length-1]; }
 function showToast(msg){ const t = $('toast'); t.textContent = msg; t.classList.remove('hidden'); clearTimeout(showToast._t); showToast._t = setTimeout(() => t.classList.add('hidden'), 2600); }
 
 // ==================== SERVEUR (Google Apps Script) ====================
@@ -1109,7 +1115,7 @@ function renderDispoAgent(){
     $('garde-content').innerHTML = ''; $('dispo-periode').textContent = ''; return;
   }
   const keep = select.value;
-  select.innerHTML = list.map(s => `<option value="${s.id}">${esc(s.label)}${s.fin < todayISO() ? ' (passée)' : ''}</option>`).join('');
+  select.innerHTML = list.map(s => `<option value="${s.id}">${esc(s.label)}${semFinie(s) ? ' (passée)' : ''}</option>`).join('');
   select.value = list.find(s => s.id == keep) ? keep : defaultSemaine(list).id;
   const s = semaineById(select.value); currentSemaineId = s.id;
   $('dispo-periode').textContent = `Du ${longDate(s.debut)} 19h au ${longDate(s.fin)} 4h · Équipe ${s.equipeNum}`;
@@ -1346,7 +1352,7 @@ function renderSemaines(){
   const list = sortedSemaines(data.semaines), t = todayISO();
   if (!list.length) { $('equipes-list').innerHTML = '<p class="p-5 text-sm text-ink-500">Aucune semaine.</p>'; return; }
   $('equipes-list').innerHTML = list.map(s => {
-    const st = weekStats(s), past = s.fin < t, now = s.debut <= t && s.fin >= t;
+    const st = weekStats(s), past = semFinie(s), now = semEnCours(s);
     return `<div class="px-5 py-3.5 flex flex-wrap items-center justify-between gap-3 ${past ? 'opacity-60' : ''}">
       <div class="flex items-center gap-3">
         <span class="font-head text-white text-lg rounded-lg flex items-center justify-center" style="width:38px;height:38px;background:${now ? 'var(--rouge)' : 'var(--ink)'}">${s.equipeNum}</span>
@@ -1402,7 +1408,7 @@ function deleteSemaine(id){
 }
 function populateSelects(){
   const list = sortedSemaines(data.semaines), t = todayISO();
-  const opts = list.map(s => `<option value="${s.id}">${esc(s.label)}${s.fin < t ? ' (passée)' : ''}</option>`).join('');
+  const opts = list.map(s => `<option value="${s.id}">${esc(s.label)}${semFinie(s) ? ' (passée)' : ''}</option>`).join('');
   ['planning-equipe-select','entretien-semaine-select','synthese-semaine-select'].forEach(id => { const el = $(id), v = el.value; el.innerHTML = opts; if (v && semaineById(v)) el.value = v; else if (list.length) el.value = defaultSemaine(list).id; });
 }
 
@@ -1524,7 +1530,7 @@ function pastille(id, st){
 }
 function renderEntretien(){
   const s = semaineById($('entretien-semaine-select').value); if (!s) return;
-  const past = s.fin < todayISO(), e = getEntretien(s.id);
+  const past = semFinie(s), e = getEntretien(s.id);
   [['consigne-generale', e.consigne], ['tig-taches', e.tig]].forEach(([id, v]) => { const el = $(id); el.value = v || ''; el.readOnly = past; el.style.background = past ? '#f4f5f7' : '#fff'; });
   data.vehicules.forEach(v => { const arr = e.inventaire[v.id] = (e.inventaire[v.id] || []).slice(0, v.places); while (arr.length < v.places) arr.push(null); });
   const pers = equipeMenage(s), st = inventaireStats(s);
@@ -1646,7 +1652,7 @@ function gardeChips(g){
 }
 function currentTeamWeek(){
   const t = todayISO(), all = sortedSemaines(data.semaines);
-  return all.find(s => s.debut <= t && s.fin >= t) || all.find(s => s.debut > t) || null;
+  return all.find(s => semEnCours(s)) || all.find(s => !semFinie(s)) || null;
 }
 function renderDashboard(){
   if (!currentUser) return;
@@ -1654,10 +1660,10 @@ function renderDashboard(){
   const mine = sortedSemaines(data.semaines.filter(s => me.equipeNum && inTeam(me, s.equipeNum)));
   const anMine = mine.filter(s => s.debut.slice(0, 4) === year);
   const nbMan = anMine.filter(s => ['oui', 'echange'].includes(peekGarde(me.id, s.id).manoeuvre)).length;
-  const next = mine.find(s => s.fin >= t), now = !!(next && next.debut <= t), dj = next ? daysUntil(next.debut) : null;
+  const next = mine.find(s => !semFinie(s)), now = !!(next && semEnCours(next)), dj = next ? daysUntil(next.debut) : null;
   const h = new Date().getHours(), salut = h >= 5 && h < 18 ? 'Bonjour' : 'Bonsoir';
   const role = me.isAdmin ? 'Administrateur' : me.sog ? 'SOG' : 'Agent';
-  const when = !next ? 'Aucune astreinte programmée' : now ? 'Astreinte en cours' : dj === 0 ? 'Astreinte ce soir' : dj === 1 ? 'Astreinte demain' : `Prochaine astreinte dans ${dj} jours`;
+  const when = !next ? 'Aucune astreinte programmée' : now ? 'Astreinte en cours' : dj <= 0 ? 'Astreinte aujourd’hui' : dj === 1 ? 'Astreinte demain' : `Prochaine astreinte dans ${dj} jours`;
   $('dash-hero').innerHTML = `<div class="hero-l">
       <p class="hero-date">${longDate(t)}</p>
       <h2 class="hero-title">${salut} ${esc(me.prenom)}</h2>
@@ -1665,7 +1671,7 @@ function renderDashboard(){
     </div>
     <div class="hero-r ${now ? 'live' : ''}">
       <p class="hero-when">${now ? '<i class="pulse"></i>' : uiIco('clock')}${when}</p>
-      ${next ? `<p class="hero-sem">${esc(next.label)}</p><p class="hero-range">${frDate(next.debut)} 19h → ${frDate(next.fin)} 4h</p>` : ''}
+      ${next ? `<p class="hero-sem">${esc(next.label)}</p><p class="hero-range">${semPeriode(next)}</p>` : ''}
     </div>`;
   // Indicateurs
   const f = next ? nbFilled(me.id, next.id) : 0;
@@ -1674,7 +1680,7 @@ function renderDashboard(){
   const fp = fo ? Math.min(100, Math.round(fh / fo * 100)) : 0;
   const kpi = (icon, cls, lbl, val, sub, go) => `<button class="card kpi2 ${cls}" ${go ? `onclick="${go}"` : 'disabled'}><span class="kpi-ic">${uiIco(icon)}</span><span class="kpi-lbl">${lbl}</span><span class="kpi-val">${val}</span><span class="kpi-sub">${sub}</span></button>`;
   $('dash-kpis').innerHTML =
-    kpi('dispo', 'k-navy', 'Astreintes ' + year, anMine.length, `${anMine.filter(s => s.fin >= t).length} à venir`, me.equipeNum ? "showView('dispo')" : '') +
+    kpi('dispo', 'k-navy', 'Astreintes ' + year, anMine.length, `${anMine.filter(s => !semFinie(s)).length} à venir`, me.equipeNum ? "showView('dispo')" : '') +
     kpi('flag', 'k-red', 'Manœuvres ' + year, nbMan, anMine.length ? `sur ${anMine.length} astreinte${anMine.length > 1 ? 's' : ''}` : 'aucune astreinte', next ? `goDispo('${next.id}', true)` : '') +
     kpi('clock', f === 12 ? 'k-green' : 'k-gold', 'Mes créneaux', next ? `${f}/12` : '–', next ? (f === 12 ? 'tout est renseigné' : `${12 - f} à renseigner`) : 'pas d’astreinte prévue', next ? `goDispo('${next.id}')` : '') +
     kpi('formation', 'k-green', 'Formation ' + year, comps.length ? fp + ' %' : '–', comps.length ? `${fmtH(fh)} h sur ${fmtH(fo)} h` : 'non inscrit', "showView('formation')");
@@ -1686,7 +1692,7 @@ function renderDashboard(){
       <div class="next-body">
         <p class="next-kicker">${now ? '<i class="pulse"></i>Astreinte en cours' : dj <= 1 ? 'Astreinte imminente' : 'Prochaine astreinte · J-' + dj}</p>
         <p class="next-title">${esc(next.label)}</p>
-        <p class="next-sub">${longDate(next.debut)} 19h → ${longDate(next.fin)} 4h</p>
+        <p class="next-sub">${longDate(next.debut)} 4h → ${longDate(next.fin)} 4h</p>
         <p class="next-sub">Équipe au minimum sur <b>${st.auMin} / 12</b> créneaux (mini ${st.min} agents)</p>
         <div class="next-chips">${gardeChips(g)}</div>
       </div>
@@ -1698,19 +1704,19 @@ function renderDashboard(){
   // Messages
   const msgs = [];
   if ((data.messageImportant || '').trim()) msgs.push(`<div class="msg msg-red">${uiIco('messages')}<div><b>Message de la caserne</b><br>${esc(data.messageImportant).replace(/\n/g, '<br>')}</div></div>`);
-  mine.filter(s => s.fin >= t).slice(0, 4).forEach(s => { const e = data.entretien[s.id] || {};
+  mine.filter(s => !semFinie(s)).slice(0, 4).forEach(s => { const e = data.entretien[s.id] || {};
     if ((e.consigne || '').trim()) msgs.push(`<div class="msg msg-gold">${uiIco('entretien')}<div><b>Consigne – ${esc(s.label)}</b><br>${esc(e.consigne).replace(/\n/g, '<br>')}</div></div>`);
     if ((e.tig || '').trim()) msgs.push(`<div class="msg msg-navy">${uiIco('alert')}<div><b>TIG – ${esc(s.label)}</b><br>${esc(e.tig).replace(/\n/g, '<br>')}</div></div>`); });
   $('dash-consignes').innerHTML = msgs.join('') || `<div class="flex items-center gap-3 text-ink-500"><span class="empty-ic">${uiIco('messages')}</span>Aucun message pour le moment.</div>`;
   // Prochaines astreintes (frise)
-  const up = mine.filter(s => s.fin >= t).slice(0, 4);
+  const up = mine.filter(s => !semFinie(s)).slice(0, 4);
   $('dash-prochaines').innerHTML = up.length ? '<div class="tl">' + up.map(s => {
     const g = peekGarde(me.id, s.id), ff = nbFilled(me.id, s.id), d = new Date(s.debut + 'T12:00:00'), j = daysUntil(s.debut);
-    const quand = s.debut <= t ? 'en cours' : j === 1 ? 'demain' : 'dans ' + j + ' j';
+    const quand = semEnCours(s) ? 'en cours' : j <= 0 ? 'aujourd’hui 4h' : j === 1 ? 'demain' : 'dans ' + j + ' j';
     const man = g.manoeuvre === 'oui' ? (g.profil === 'formateur' ? 'Formateur' : 'Manœuvre') : g.manoeuvre === 'echange' ? 'Échange' : g.manoeuvre === 'non' ? 'Pas de manœuvre' : 'Manœuvre ?';
     return `<button class="tl-row" onclick="goDispo('${s.id}')">
       <span class="tl-date"><b>${d.getDate()}</b>${d.toLocaleDateString('fr-FR', {month: 'short'}).replace('.', '')}</span>
-      <span class="tl-main"><span class="tl-title">${esc(s.label)}</span><span class="tl-sub">${frDate(s.debut)} 19h → ${frDate(s.fin)} 4h · ${quand}</span></span>
+      <span class="tl-main"><span class="tl-title">${esc(s.label)}</span><span class="tl-sub">${semPeriode(s)} · ${quand}</span></span>
       <span class="tl-tags"><span class="chip2 ${ff === 12 ? 'ok' : ff ? 'mid' : ''}">${ff}/12</span><span class="chip2 ${g.manoeuvre === 'oui' ? 'ok' : g.manoeuvre === 'non' ? 'ko' : g.manoeuvre === 'echange' ? 'mid' : ''}">${man}</span></span>
       <span class="tl-go">${uiIco('chev')}</span></button>`; }).join('') + '</div>'
     : `<p class="p-5 text-sm text-ink-500">Aucune astreinte à venir.</p>`;
@@ -1724,7 +1730,7 @@ function renderDashCaserne(){
   const s = currentTeamWeek();
   if (!s) { el.innerHTML = '<div class="card-head"><h3>Caserne</h3></div><p class="p-5 text-sm text-ink-500">Aucune semaine programmée.</p>'; return; }
   const st = weekStats(s), sans = st.ags.filter(a => nbFilled(a.id, s.id) === 0), man = manoeuvreParticipants(s).length;
-  const t = todayISO(), now = s.debut <= t;
+  const now = semEnCours(s);
   const max = Math.max(st.min, ...st.rows.map(r => r.total), 1);
   const bars = st.rows.map((r, i) => `<span class="cb ${r.total >= st.min ? 'ok' : 'ko'}" title="${dayLabel(s.debut, CRENEAUX[i].d)} ${CRENEAUX[i].h} : ${r.total} agent(s)"><i style="height:${Math.max(8, Math.round(r.total / max * 100))}%"></i></span>`).join('');
   el.innerHTML = `<div class="card-head"><div><h3>${now ? 'Astreinte en cours' : 'Prochaine astreinte'}</h3><p>${esc(s.label)}</p></div></div>
