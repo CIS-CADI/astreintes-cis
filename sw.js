@@ -11,3 +11,11 @@ self.addEventListener('fetch', e => {
     .then(r => { if (r.ok) { const c = r.clone(); caches.open(CACHE).then(ca => ca.put(e.request, c)); } return r; })
     .catch(() => caches.match(e.request).then(r => r || caches.match('./index.html'))));
 });
+// Clic sur une notification : ouvre (ou ramène au premier plan) l'appli
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  e.waitUntil(self.clients.matchAll({type: 'window', includeUncontrolled: true}).then(cs => {
+    for (const c of cs) { if ('focus' in c) return c.focus(); }
+    return self.clients.openWindow('./');
+  }));
+});
