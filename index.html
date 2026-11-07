@@ -1154,12 +1154,12 @@ function longDate(isoStr){ return new Date(isoStr+'T12:00:00').toLocaleDateStrin
 function ls(){ try { return window.localStorage; } catch(e) { return null; } }
 function agentName(a){ return a ? a.nom + ' ' + a.prenom : '?'; }
 function agentById(id){ return data.agents.find(a => a.id == id); }
-// Insignes : CATE = adjudant, CA1E = sergent, CDE = caporal, EQ = sans grade (carré noir)
+// Insignes (grades sapeurs-pompiers) : CATE = adjudant, CA1E = sergent, CDE = caporal, EQ = sapeur
 const GRADE_INS = {
-  CATE: ['Adjudant', '<rect width="22" height="16" rx="2.5" fill="#15171c"/><rect x="3" y="5.2" width="16" height="5.6" rx=".8" fill="#d5dae2"/><rect x="3" y="7.3" width="16" height="1.4" fill="#d3202f"/>'],
-  CA1E: ['Sergent', '<rect width="22" height="16" rx="2.5" fill="#15171c"/><path d="M3.5 12.5 8.5 3.5h3l-5 9Z" fill="#d5dae2"/><path d="M10.5 12.5l5-9h3l-5 9Z" fill="#d5dae2"/>'],
-  CDE: ['Caporal', '<rect width="22" height="16" rx="2.5" fill="#15171c"/><path d="M4.5 3.2 11 7.4l6.5-4.2M4.5 8.2 11 12.4l6.5-4.2" stroke="#e0242f" stroke-width="2.3" fill="none" stroke-linejoin="round"/>'],
-  EQ: ['Équipier (sans grade)', '<rect x="3" width="16" height="16" rx="2" fill="#15171c"/>']};
+  CATE: ['Adjudant', '<rect width="22" height="16" rx="1.5" fill="#111"/><rect x="2.5" y="6" width="17" height="4" fill="#f5c400" stroke="#e07b00" stroke-width=".7"/>'],
+  CA1E: ['Sergent', '<rect width="22" height="16" rx="1.5" fill="#111"/><path d="M7.6 14.2 12.4 1.8h2.8l-4.8 12.4Z" fill="#fff" stroke="#e0242f" stroke-width=".8" stroke-linejoin="round"/>'],
+  CDE: ['Caporal', '<rect width="22" height="16" rx="1.5" fill="#111"/><path d="M4.6 14.2 9.4 1.8h2.6L7.2 14.2ZM9.8 14.2l4.8-12.4h2.6l-4.8 12.4Z" fill="#e8202a"/>'],
+  EQ: ['Sapeur', '<rect width="22" height="16" rx="1.5" fill="#111"/>']};
 function gradeIns(g){ const x = GRADE_INS[g]; return x ? `<svg class="gins" viewBox="0 0 22 16" aria-hidden="true">${x[1]}</svg>` : ''; }
 function gradeBadge(g){
   if (!GRADE_INS[g]) return `<span class="grade" style="background:${GRADE_COLORS[g]||'#64748b'}">${esc(g||'–')}</span>`;
