@@ -290,6 +290,9 @@ h1,h2,h3,.font-head{font-family:Oswald,sans-serif;letter-spacing:.3px}
 .arbre-link{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;padding:3px 9px;border-radius:999px;background:#eef2f9;color:var(--ink-2);font-weight:600;border:0;cursor:pointer}
 .arbre-link .i{width:13px;height:13px}.arbre-link:hover{background:#e1e8f5}
 .comp-tab.add{border-style:dashed;color:var(--ink-2)}
+.hdr-wrap{position:relative;padding-right:76px !important}
+.hdr-logo{position:absolute;right:16px;top:50%;transform:translateY(-50%);width:54px;height:54px;border-radius:50%;background:#fff;object-fit:contain;padding:2px;box-shadow:0 0 0 2px rgba(255,255,255,.35),0 4px 12px rgba(0,0,0,.35)}
+@media (max-width:640px){.hdr-wrap{padding-right:72px !important}.hdr-logo{top:12px;transform:none;width:52px;height:52px}}
 .cnx{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 12px;border-radius:999px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;font-size:13px;cursor:pointer;white-space:nowrap}
 .cnx:hover{background:rgba(255,255,255,.16)}.cnx b{font-family:Oswald,sans-serif;font-size:16px}
 .cnx .dot{width:9px;height:9px;border-radius:50%;background:#3ddc84;box-shadow:0 0 0 0 rgba(61,220,132,.6);animation:cnxDot 1.6s infinite}
@@ -583,7 +586,8 @@ nav.sticky{box-shadow:0 2px 8px rgba(20,33,61,.06)}
 <div id="app-screen" class="hidden min-h-screen flex flex-col">
   <header class="no-print app-head" style="background:var(--ink);border-bottom:4px solid var(--rouge)">
     <div id="offline-bar" class="offline hidden"></div>
-    <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3 text-white">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3 text-white hdr-wrap">
+      <img src="logo-cis.webp" alt="Logo CIS Cadillac-Béguey" class="hdr-logo" width="54" height="54">
       <div>
         <h1 class="text-xl uppercase leading-tight">Astreintes</h1>
         <p class="text-xs opacity-70" id="header-user-info"></p>
