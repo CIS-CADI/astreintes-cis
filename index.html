@@ -290,6 +290,19 @@ h1,h2,h3,.font-head{font-family:Oswald,sans-serif;letter-spacing:.3px}
 .arbre-link{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;padding:3px 9px;border-radius:999px;background:#eef2f9;color:var(--ink-2);font-weight:600;border:0;cursor:pointer}
 .arbre-link .i{width:13px;height:13px}.arbre-link:hover{background:#e1e8f5}
 .comp-tab.add{border-style:dashed;color:var(--ink-2)}
+.cnx{display:inline-flex;align-items:center;gap:7px;height:34px;padding:0 12px;border-radius:999px;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;font-size:13px;cursor:pointer;white-space:nowrap}
+.cnx:hover{background:rgba(255,255,255,.16)}.cnx b{font-family:Oswald,sans-serif;font-size:16px}
+.cnx .dot{width:9px;height:9px;border-radius:50%;background:#3ddc84;box-shadow:0 0 0 0 rgba(61,220,132,.6);animation:cnxDot 1.6s infinite}
+@keyframes cnxDot{0%{box-shadow:0 0 0 0 rgba(61,220,132,.6)}70%{box-shadow:0 0 0 7px rgba(61,220,132,0)}100%{box-shadow:0 0 0 0 rgba(61,220,132,0)}}
+.cnx-row{display:flex;align-items:center;gap:10px;padding:10px 16px;border-top:1px solid var(--bord)}
+.cnx-row .av{width:34px;height:34px;border-radius:11px;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex:0 0 34px}
+.cnx-row .nm{flex:1;min-width:0}.cnx-row .nm b{display:block;color:var(--ink)}.cnx-row .nm span{font-size:12px;color:#6b7387}
+.cnx-st{font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:999px;white-space:nowrap}
+.cnx-st.on{background:#dcf5e3;color:#146c34}.cnx-st.rec{background:#fff1d6;color:#9a5a00}.cnx-st.off{background:#eef0f4;color:#6b7387}
+.cnx-h{padding:8px 16px;font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:#6b7387;background:#f7f8fb;border-top:1px solid var(--bord)}
+.xl-card{display:flex;align-items:center;gap:16px;flex-wrap:wrap;padding:18px 20px}
+.xl-ic{width:52px;height:52px;border-radius:14px;background:#1d6f42;color:#fff;display:flex;align-items:center;justify-content:center;font-family:Oswald,sans-serif;font-size:20px;flex:0 0 52px}
+@media (max-width:640px){.cnx span.lbl{display:none}}
 #dash-alerte:empty{display:none}
 #dash-alerte{display:grid;gap:10px}
 .alerte{position:relative;display:flex;gap:14px;align-items:flex-start;padding:14px 16px;border-radius:16px;background:#fff;border:2px solid var(--rouge);color:#2b1216;animation:alPulse 1.2s ease-in-out infinite}
@@ -577,6 +590,7 @@ nav.sticky{box-shadow:0 2px 8px rgba(20,33,61,.06)}
       </div>
       <div class="flex items-center gap-2 flex-wrap">
         <span id="sync-status" class="text-xs opacity-80 mr-1"></span>
+        <button id="cnx-btn" class="cnx hidden" onclick="openConnectes()" title="Agents connectés"><i class="dot"></i><b id="cnx-n">–</b><span class="lbl">connecté(s)</span></button>
         <button id="bell" class="bell" onclick="openInbox()" title="Mes messages" aria-label="Mes messages"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8.5a6 6 0 1 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 14.5 6 8.5Z"/><path d="M10 19.5a2.1 2.1 0 0 0 4 0"/></svg><span id="bell-n" class="bell-n hidden"></span></button>
         <span id="role-badge" class="text-xs font-semibold px-2.5 py-1 rounded-full"></span>
         <button onclick="refreshState(true)" class="btn btn-ghost hdr-btn" style="padding:6px 12px">Actualiser</button>
@@ -973,6 +987,12 @@ nav.sticky{box-shadow:0 2px 8px rgba(20,33,61,.06)}
         <div class="p-5 grid grid-cols-1 sm:grid-cols-2 gap-2" id="onglets-content"></div>
       </div>
       <div class="card overflow-hidden mt-5">
+        <div class="card-head"><div><h2>Export Excel</h2><p>Toutes les données de l’application dans un classeur (.xlsx), une feuille par rubrique. Les mots de passe ne sont jamais exportés.</p></div></div>
+        <div class="xl-card"><span class="xl-ic">XLS</span>
+          <div class="flex-1 text-sm" style="min-width:200px">Personnel, semaines, disponibilités, manœuvre &amp; ménage, GIPSI, entretien &amp; passation, formation, compétences, anomalies, messages et lectures, remise, menus.</div>
+          <button class="btn btn-red" id="xl-btn" onclick="exportExcel()">Télécharger le fichier Excel</button></div>
+      </div>
+      <div class="card overflow-hidden mt-5">
         <div class="card-head"><div><h2>Sauvegarde GitHub</h2><p>Copie de toutes les données (sauf les mots de passe) dans le dépôt GitHub privé, chaque nuit vers 3 h.</p></div>
           <button onclick="sauvegarderGithub()" id="backup-btn" class="btn btn-red">Sauvegarder maintenant</button></div>
         <div class="p-5 text-sm" id="backup-info"></div>
@@ -1039,6 +1059,14 @@ nav.sticky{box-shadow:0 2px 8px rgba(20,33,61,.06)}
       <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="agent-admin" class="w-4 h-4 accent-primary-600"> Compte administrateur</label>
       <div class="flex justify-end gap-2 pt-2"><button onclick="closeAgentModal()" class="btn btn-light">Annuler</button><button onclick="saveAgent()" class="btn btn-red">Enregistrer</button></div>
     </div>
+  </div>
+</div>
+
+<!-- ===== Agents connectés ===== -->
+<div id="cnx-modal" class="modal hidden" onclick="if(event.target===this)this.classList.add('hidden')">
+  <div class="modal-box" style="max-width:480px">
+    <div class="modal-head flex items-center justify-between"><h3>Agents connectés</h3><button class="text-white opacity-80 text-sm" onclick="$('cnx-modal').classList.add('hidden')">Fermer ✕</button></div>
+    <div id="cnx-list" style="max-height:70vh;overflow:auto"></div>
   </div>
 </div>
 
@@ -3009,7 +3037,7 @@ async function notifier(init){
   if (nouveaux.length) { const b = $('bell'); b.classList.remove('ring'); void b.offsetWidth; b.classList.add('ring'); }
   try { localStorage.setItem(NOTIF_KEY + currentUser.id, JSON.stringify([...new Set(vus.concat(nouveaux.map(m => m.id)))].filter(id => data.diffs[id]))); } catch (e) {}
 }
-function apresChargement(){ majCloche(); notifier(false); alerter(); if (activeView === 'anomalies' && !document.querySelector('#view-anomalies :focus')) drawAnomalies(); }
+function apresChargement(){ majConnectes(); majCloche(); notifier(false); alerter(); if (activeView === 'anomalies' && !document.querySelector('#view-anomalies :focus')) drawAnomalies(); }
 
 // --- Rédaction (SOG) ---
 function renderDiffForm(){
@@ -3258,6 +3286,109 @@ function renderDashRecap(){
       tiles.push(t(`$('entretien-semaine-select').value='${s.id}'; showView('entretien')`, 'broom', 'Passation', `${nz}/${zs.length}`, `zones de ménage · inventaire ${ni}/${data.vehicules.length} engins (${esc(p.label)})`)); }
   }
   el.innerHTML = `<div class="card-head"><div><h3>Mon récapitulatif</h3><p>Tout en un coup d’œil · ${year}</p></div></div><div class="p-4 rc-grid">${tiles.join('')}</div>`;
+}
+
+// ==================== CONNECTÉS (administrateur) ====================
+let cnxData = null, cnxAt = 0;
+const CNX_EN_LIGNE = 3 * 60000, CNX_RECENT = 30 * 60000;
+async function majConnectes(force){
+  const b = $('cnx-btn'); if (!b) return;
+  b.classList.toggle('hidden', !isAdminU()); if (!isAdminU()) return;
+  if (!force && Date.now() - cnxAt < 40000 && cnxData) return;
+  cnxAt = Date.now();
+  try { cnxData = await call('connectes', token); } catch (e) { return; }
+  const n = Object.values(cnxData.vus || {}).filter(t => cnxData.maintenant - t < CNX_EN_LIGNE).length;
+  $('cnx-n').textContent = n; b.title = n + ' agent(s) connecté(s) en ce moment';
+  if (!$('cnx-modal').classList.contains('hidden')) drawConnectes();
+}
+async function openConnectes(){ $('cnx-list').innerHTML = '<p class="p-5 text-sm text-ink-500">Chargement…</p>'; $('cnx-modal').classList.remove('hidden'); await majConnectes(true); drawConnectes(); }
+function drawConnectes(){
+  if (!cnxData) { $('cnx-list').innerHTML = '<p class="p-5 text-sm text-red-700">Impossible de joindre le serveur.</p>'; return; }
+  const now = cnxData.maintenant, vus = cnxData.vus || {};
+  const l = activeAgents().filter(a => a.id !== 99).map(a => ({a, t: vus[a.id] || 0})).sort((x, y) => y.t - x.t || agentName(x.a).localeCompare(agentName(y.a), 'fr'));
+  const depuis = t => { const m = Math.round((now - t) / 60000); return m < 1 ? 'à l’instant' : m < 60 ? 'il y a ' + m + ' min' : 'il y a ' + Math.round(m / 60) + ' h'; };
+  const row = (x, cls, txt) => `<div class="cnx-row"><span class="av">${esc(initials(x.a))}</span><span class="nm"><b>${esc(agentName(x.a))}</b><span>${x.a.equipeNum ? 'Équipe ' + x.a.equipeNum + ' · ' : ''}${ROLE_LBL[roleOf(x.a)]}</span></span><span class="cnx-st ${cls}">${txt}</span></div>`;
+  const on = l.filter(x => x.t && now - x.t < CNX_EN_LIGNE), rec = l.filter(x => x.t && now - x.t >= CNX_EN_LIGNE && now - x.t < CNX_RECENT), jour = l.filter(x => x.t && now - x.t >= CNX_RECENT);
+  $('cnx-list').innerHTML = `<div class="cnx-h">En ligne maintenant · ${on.length}</div>` + (on.map(x => row(x, 'on', 'en ligne')).join('') || '<p class="px-4 py-3 text-sm text-ink-500">Personne.</p>')
+    + (rec.length ? `<div class="cnx-h">Actifs dans la dernière demi-heure · ${rec.length}</div>` + rec.map(x => row(x, 'rec', depuis(x.t))).join('') : '')
+    + (jour.length ? `<div class="cnx-h">Venus ces 6 dernières heures · ${jour.length}</div>` + jour.map(x => row(x, 'off', depuis(x.t))).join('') : '');
+}
+
+// ==================== EXPORT EXCEL (administrateur) ====================
+const XLSX_URL = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+function chargerXlsx(){
+  if (window.XLSX) return Promise.resolve();
+  return new Promise((ok, ko) => { const sc = document.createElement('script'); sc.src = XLSX_URL; sc.onload = ok; sc.onerror = () => ko(new Error('Bibliothèque Excel indisponible (connexion ?)')); document.head.appendChild(sc); });
+}
+function nomA(id){ const a = agentById(+id); return a ? agentName(a) : (id == null || id === '' ? '' : '#' + id); }
+function dateFr(d){ return d ? new Date(String(d).length === 10 ? d + 'T12:00:00' : d).toLocaleDateString('fr-FR') : ''; }
+function heureFr(ms){ return ms ? new Date(ms).toLocaleString('fr-FR') : ''; }
+function feuillesExport(){
+  const F = {}, sem = sortedSemaines(data.semaines), semLbl = id => { const x = semaineById(id); return x ? x.label : id; };
+  const JOURS = ['Ven', 'Sam', 'Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven'];
+  F['Personnel'] = data.agents.filter(a => a.id !== 99).slice().sort((a, b) => (a.equipeNum || 9) - (b.equipeNum || 9) || byOrdre(a, b)).map(a => ({
+    Nom: a.nom, Prénom: a.prenom, Identifiant: a.identifiant || '', Fonction: a.grade || '', Grade: RANG_LBL[agentRang(a)] || '', Équipe: a.equipeNum || '',
+    'Équipes en renfort': (a.equipesSup || []).join(', '), Profil: ROLE_LBL[roleOf(a)], Conduite: agentCods(a).join(', '), Actif: a.actif === false ? 'Non' : 'Oui'}));
+  F['Semaines'] = sem.map(x => ({Semaine: x.label, Équipe: x.equipeNum, Début: dateFr(x.debut), Fin: dateFr(x.fin), Période: semPeriode(x), Statut: semFinie(x) ? 'Passée' : semEnCours(x) ? 'En cours' : 'À venir'}));
+  const dsp = [];
+  sem.forEach(x => Object.keys(data.dispos).forEach(aid => { const w = (data.dispos[aid] || {})[x.id]; if (!w || !Object.keys(w).length) return;
+    const r = {Semaine: x.label, Équipe: x.equipeNum, Agent: nomA(aid)}; CRENEAUX.forEach((c, i) => { r[`${JOURS[c.d]} ${c.h}`] = w[i] ? (w[i].t === 'R' ? 'Remplacé par ' : '') + cellText(w[i]) : ''; }); r.Renseignés = nbFilled(+aid, x.id) + '/12'; dsp.push(r); }));
+  F['Disponibilités'] = dsp;
+  const gar = [];
+  sem.forEach(x => Object.keys(data.garde).forEach(aid => { const g = (data.garde[aid] || {})[x.id]; if (!g || !Object.values(g).some(v => v !== null && v !== undefined)) return;
+    const r = {Semaine: x.label, Agent: nomA(aid)};
+    const LBL = {manoeuvre: 'Manœuvre', profil: 'Profil manœuvre', echangeManoeuvreId: 'Remplaçant manœuvre', repas: 'Repas vendredi', petitdej: 'Petit-déjeuner samedi',
+      menage: 'Ménage', echangeMenageId: 'Remplaçant ménage', entretien: 'Entretien samedi', echangeEntretienId: 'Remplaçant entretien'};
+    const VAL = {oui: 'Oui', non: 'Non', echange: 'Échange', present: 'Présent', absent: 'Absent', formateur: 'Formateur', stagiaire: 'Stagiaire', manoeuvrant: 'Manœuvrant'};
+    Object.keys(g).forEach(k => { const v = g[k]; r[LBL[k] || k] = /Id$/.test(k) ? nomA(v) : v === true ? 'Oui' : v === false ? 'Non' : v == null ? '' : (VAL[v] || String(v)); }); gar.push(r); }));
+  F['Manœuvre & ménage'] = gar;
+  F['GIPSI'] = sem.filter(x => data.gipsi[x.id]).map(x => { const g = data.gipsi[x.id]; return {Semaine: x.label, SOG: (g.sog || []).filter(Boolean).map(nomA).join(', '), Observations: (g.obs || []).filter(Boolean).join(' | ')}; });
+  F['Entretien & passation'] = sem.filter(x => data.entretien[x.id]).map(x => { const e = data.entretien[x.id], m = e.menage || {}, zs = zonesMenage();
+    return {Semaine: x.label, Consigne: e.consigne || '', TIG: e.tig || '',
+      'Inventaire (affectations)': data.vehicules.map(v => v.nom + ' : ' + ((e.inventaire || {})[v.id] || []).filter(Boolean).map(nomA).join(', ')).join(' | '),
+      'Inventaire (résultat)': data.vehicules.map(v => { const c = (e.invcr || {})[v.id]; return c ? `${v.nom} : ${c.etat === 'ok' ? 'complet' : c.etat === 'manque' ? 'manquants' : '?'}${c.c ? ' (' + c.c + ')' : ''} – ${nomA(c.by)}` : ''; }).filter(Boolean).join(' | '),
+      'Ménage fait': zs.filter(z => (m[z] || {}).f).map(z => z + ' (' + nomA(m[z].by) + ')').join(', '), 'Ménage non fait': zs.filter(z => !(m[z] || {}).f).join(', '),
+      'Remarques ménage': [e.crm || ''].concat(zs.filter(z => (m[z] || {}).c).map(z => z + ' : ' + m[z].c)).filter(Boolean).join(' | ')}; });
+  F['Formation – séances'] = Object.keys(data.seances).map(id => data.seances[id]).filter(Boolean).sort((a, b) => (a.date || '').localeCompare(b.date || '')).map(x => ({
+    Date: dateFr(x.date), Année: x.annee, Compétence: (compByCode(x.comp) || {}).nom || x.comp, Agent: nomA(x.agentId), Fonction: x.fonction || '', Heures: +x.heures || 0,
+    Type: x.type || '', Conditions: x.conditions || '', Lieu: x.lieu || '', Formateur: nomA(x.formateurId)}));
+  const an = +todayISO().slice(0, 4), par = [];
+  data.formation.competences.forEach(c => c.participants.forEach(pp => { const st = agentStats(c, an, pp.id);
+    par.push({Compétence: c.nom || c.code, Agent: nomA(pp.id), Rôle: pp.role || '', ['Heures ' + an]: st.faites, Objectif: st.obj, Statut: STATUTS[st.statut] || st.statut}); }));
+  F['Formation – participants'] = par;
+  const cp = [];
+  activeAgents().filter(a => a.id !== 99).forEach(a => data.arbre.branches.forEach(b => b.items.forEach(it => { const v = (data.cps[a.id] || {})[it.id] || {}, n = cpNiv(a.id, it.id);
+    if (!n && !v.c) return; cp.push({Agent: agentName(a), Branche: b.nom, Compétence: it.nom, 'Lien conduite': it.lien || '', Niveau: NIVEAUX[n].lbl, Date: dateFr(v.d), 'Validé par': nomA(v.by), Commentaire: v.c || ''}); })));
+  F['Compétences'] = cp;
+  F['Anomalies'] = anoList().map(a => ({Date: heureFr(Date.parse(a.d)), Catégorie: (ANO_CATS[a.cat] || [a.cat])[0], Description: a.desc, Référence: a.ref || '', Immatriculation: a.immat || '',
+    Localisation: a.loc || '', Urgent: a.urg ? 'Oui' : 'Non', 'Signalé par': nomA(a.de), Statut: ANO_ST[a.statut] || a.statut, 'Suite donnée': a.suite || '', 'Traité par': nomA(a.par), 'Traité le': heureFr(Date.parse(a.dt))}));
+  F['Messages'] = diffList().map(m => { const dest = destinataires(m), lus = dest.filter(a => estLu(m.id, a.id));
+    return {Date: heureFr(Date.parse(m.d)), Titre: m.t || '', Priorité: PRIOS[m.prio || 'info'].lbl, Destinataires: cibleTxt(m), Auteur: nomA(m.de), 'Visible jusqu’au': dateFr(m.fin), Lus: lus.length + '/' + dest.length, Message: m.m}; });
+  const lec = [];
+  diffList().forEach(m => destinataires(m).forEach(a => lec.push({Message: m.t || '', Agent: agentName(a), Lu: estLu(m.id, a.id) ? 'Oui' : 'Non', 'Lu le': heureFr((data.lus[a.id] || {})[m.id])})));
+  F['Lectures'] = lec;
+  F['Remise'] = data.vehicules.map(v => ({Engin: v.nom, Places: v.places || (v.postes || []).length || ''}));
+  F['Menus'] = menuTabs().map(t => ({Onglet: t.orig, 'Nom affiché': (menusCfg().labels || {})[t.v] || '', Agent: menuVisible(t.v, 'agent') ? 'Oui' : 'Non', Formateur: menuVisible(t.v, 'formateur') ? 'Oui' : 'Non', SOG: menuVisible(t.v, 'sog') ? 'Oui' : 'Non', Admin: menuVisible(t.v, 'admin') ? 'Oui' : 'Non'}));
+  if ((data.messageImportant || '').trim()) F['Message permanent'] = [{Message: data.messageImportant}];
+  return F;
+}
+async function exportExcel(){
+  if (!isAdminU()) return;
+  const b = $('xl-btn'), t0 = b.textContent; b.disabled = true; b.textContent = 'Préparation…';
+  try {
+    await chargerXlsx();
+    const F = feuillesExport(), wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Astreintes – CIS Cadillac-Béguey'], ['Export du', new Date().toLocaleString('fr-FR')], ['Par', agentName(currentUser)], [],
+      ['Feuille', 'Lignes']].concat(Object.keys(F).map(k => [k, F[k].length]))), 'Sommaire');
+    Object.keys(F).forEach(k => {
+      const rows = F[k], ws = rows.length ? XLSX.utils.json_to_sheet(rows) : XLSX.utils.aoa_to_sheet([['(aucune donnée)']]);
+      if (rows.length) { const cols = Object.keys(rows[0]); ws['!cols'] = cols.map(c => ({wch: Math.min(60, Math.max(c.length, ...rows.slice(0, 200).map(r => String(r[c] ?? '').length)) + 2)})); ws['!autofilter'] = {ref: ws['!ref']}; }
+      XLSX.utils.book_append_sheet(wb, ws, k.slice(0, 31));
+    });
+    XLSX.writeFile(wb, `Astreintes_CIS_Cadillac-Beguey_${todayISO()}.xlsx`);
+    showToast('Fichier Excel téléchargé');
+  } catch (e) { showToast('Export impossible : ' + (e.message || e)); }
+  finally { b.disabled = false; b.textContent = t0; }
 }
 
 function saveMessageImportant(){ data.messageImportant = $('message-important-text').value; saveData(); showToast('Message enregistré'); }
