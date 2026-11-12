@@ -598,6 +598,8 @@ tr.row-f td:first-child{box-shadow:inset 4px 0 0 #f0a020}tr.row-s td:first-child
 @keyframes ariBlink{50%{box-shadow:0 0 0 4px color-mix(in srgb,var(--rouge-t) 35%,transparent)}}
 .ari-c .t{display:flex;align-items:center;justify-content:space-between;font-family:Oswald,sans-serif;font-size:18px;text-transform:uppercase;color:var(--ink)}
 .ari-c .t span{font-family:Roboto,sans-serif;font-size:11.5px;font-weight:700;padding:2px 9px;border-radius:999px;background:var(--gris);text-transform:none}
+.ari-por{display:grid;grid-template-columns:minmax(0,1fr) 110px;gap:8px;align-items:center}.ari-por .lb{grid-column:1/-1;font-size:11.5px;font-weight:700;color:#5d6680;text-transform:uppercase;letter-spacing:.04em;margin-bottom:-4px}
+.ari-por input.pr{font-size:22px;font-weight:700;text-align:center;height:46px}
 .ari-p{display:flex;align-items:center;gap:8px}.ari-p input{flex:1;min-width:0;width:auto !important;font-size:26px;font-weight:700;height:52px;text-align:center}
 .ari-go{height:56px;font-size:19px;font-weight:700;border-radius:14px;width:100%;justify-content:center}
 .ari-h{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -3560,8 +3562,12 @@ function ariCharger(){
   try { ariTab = JSON.parse(localStorage.getItem(ARI_KEY) || 'null'); } catch (e) {}
   if (!ariTab || !ariTab.b) ariTab = {p: Object.assign({}, ARI_DEF), b: [ariVide('Binôme 1'), ariVide('Binôme 2'), ariVide('Sécurité', true)]};
   ariTab.p = Object.assign({}, ARI_DEF, ariTab.p);
+  ariTab.b.forEach(b => { if (b.noms && b.n1 == null) { b.n1 = b.noms; b.n2 = ''; } if (b.p1 == null) { b.p1 = b.p || ''; b.p2 = ''; } });
 }
-function ariVide(nom, secu){ return {nom, secu: !!secu, noms: '', mission: '', p: '', t: null, pl: null, tl: null, out: null}; }
+function ariVide(nom, secu){ return {nom, secu: !!secu, n1: '', n2: '', p1: '', p2: '', mission: '', p: '', t: null, pl: null, tl: null, out: null}; }
+// pression retenue pour le binôme = la plus faible des deux porteurs
+function ariPbin(a, b){ const l = [+a, +b].filter(x => x > 0); return l.length ? Math.min(...l) : 0; }
+function ariNoms(b){ return [b.n1, b.n2].filter(x => (x || '').trim()).join(' / '); }
 function ariSauver(){ try { localStorage.setItem(ARI_KEY, JSON.stringify(ariTab)); } catch (e) {} }
 function ariHeure(ms){ return ms ? new Date(ms).toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'}) : '—'; }
 function ariMin(pres){ const P = ariTab.p; return P.conso > 0 ? Math.max(0, (pres - P.pmin) * P.vol / P.conso) : 0; }
@@ -3569,7 +3575,7 @@ function ariMin(pres){ const P = ariTab.p; return P.conso > 0 ? Math.max(0, (pre
 function ariSortie(b){ if (!b.t) return null; const p0 = b.pl != null ? b.pl : +b.p, t0 = b.pl != null ? b.tl : b.t; return t0 + ariMin(p0) * 60000; }
 function ouvrirAri(){
   ariCharger();
-  $('ot-page').innerHTML = enteteOutil('ARI — contrôle des engagements', 'o_ari', 'Saisissez la pression de la bouteille, appuyez sur ENGAGEMENT : l’heure de sortie s’affiche. Calcul théorique, il ne remplace pas la lecture du manomètre.')
+  $('ot-page').innerHTML = enteteOutil('ARI — contrôle des engagements', 'o_ari', 'Saisissez le nom et la pression de chaque porteur, appuyez sur ENGAGEMENT : l’heure de sortie s’affiche (calculée sur la pression la plus faible). Calcul théorique, il ne remplace pas la lecture du manomètre.')
     + `<div class="card p-4"><details><summary class="text-sm font-semibold cursor-pointer">Réglages : bouteille ${fN(ariTab.p.vol, 1)} L · pression minimale ${ariTab.p.pmin} bar · consommation ${ariTab.p.conso} L/min</summary>
         <div class="o-grid mt-3 o-f">${oNum('ari-vol', 'Volume de la bouteille', ariTab.p.vol, 0.1, 'L')}${oNum('ari-pmin', 'Pression minimale de sortie', ariTab.p.pmin, 5, 'bar')}${oNum('ari-conso', 'Consommation retenue', ariTab.p.conso, 5, 'L/min')}${oNum('ari-al', 'Alerte avant la sortie', ariTab.p.alerte, 1, 'min')}</div>
         <p class="o-note mt-2">Valeurs à adapter à la doctrine du SDIS (consommation indicative : 40 L/min au repos, 60 à 100 L/min à l’effort).</p></details></div>
@@ -3590,29 +3596,34 @@ function ariDessin(){
   $('ari-cards').innerHTML = ariTab.b.map((b, i) => {
     const pr = +b.p || 0, autoMin = ariMin(pr);
     return `<div class="ari-c" id="ari-c${i}"><div class="t">${esc(b.nom)}<span id="ari-st${i}"></span></div>
-      <input class="sel" placeholder="Noms des porteurs" value="${esc(b.noms)}" oninput="ariTab.b[${i}].noms = this.value; ariSauver(); ariTable()">
+      ${[1, 2].map(k => `<div class="ari-por"><span class="lb">Porteur ${k}</span><input class="sel" placeholder="Nom" value="${esc(b['n' + k] || '')}" oninput="ariTab.b[${i}].n${k} = this.value; ariSauver(); ariTable()">${!b.t
+        ? `<input class="sel pr" type="number" inputmode="numeric" step="5" placeholder="bar" value="${esc(String(b['p' + k] || ''))}" oninput="ariTab.b[${i}].p${k} = this.value; ariSauver(); ariAuto(${i})">`
+        : `<span class="text-center font-semibold">${b['p' + k] ? b['p' + k] + ' bar' : '—'}</span>`}</div>`).join('')}
       <input class="sel" placeholder="Mission / secteur (facultatif)" value="${esc(b.mission)}" oninput="ariTab.b[${i}].mission = this.value; ariSauver(); ariTable()">
-      ${!b.t ? `<label class="text-xs font-semibold text-ink-500">Pression bouteille à l’engagement (la plus faible du binôme)</label>
-        <div class="ari-p"><input class="sel" type="number" inputmode="numeric" step="5" placeholder="300" value="${esc(String(b.p))}" oninput="ariTab.b[${i}].p = this.value; ariSauver(); $('ari-auto${i}').textContent = this.value ? 'Temps d’engagement possible : ' + fN(ariMin(+this.value), 0) + ' min' : ''"><span class="text-lg font-semibold">bar</span></div>
-        <p class="o-note" id="ari-auto${i}">${pr ? 'Temps d’engagement possible : ' + fN(autoMin, 0) + ' min' : ''}</p>
+      ${!b.t ? `<p class="o-note" id="ari-auto${i}"></p>
         <button class="btn btn-red ari-go" onclick="ariEngager(${i})">ENGAGEMENT</button>`
-      : `<div class="ari-h"><div><b>${ariHeure(b.t)}</b><span>engagé à ${b.p} bar</span></div><div class="sortie"><b id="ari-s${i}">${ariHeure(ariSortie(b))}</b><span>${b.out ? 'sortie prévue' : 'SORTIE AVANT'}</span></div></div>
+      : `<div class="ari-h"><div><b>${ariHeure(b.t)}</b><span>engagé à ${b.p} bar (plus faible)</span></div><div class="sortie"><b id="ari-s${i}">${ariHeure(ariSortie(b))}</b><span>${b.out ? 'sortie prévue' : 'SORTIE AVANT'}</span></div></div>
         ${b.out ? `<div class="ari-reste">Sorti à ${ariHeure(b.out)}</div>` : `<div class="ari-reste" id="ari-r${i}"></div><div class="ari-bar"><i id="ari-b${i}"></i></div>
-        <div class="ari-p"><input class="sel" style="font-size:18px;height:44px" type="number" inputmode="numeric" step="5" placeholder="Pression lue" id="ari-pl${i}"><button class="btn btn-light" onclick="ariLue(${i})">Mettre à jour</button></div>
-        ${b.pl != null ? `<p class="o-note">Dernière pression lue : ${b.pl} bar à ${ariHeure(b.tl)}</p>` : ''}
+        <div class="ari-p"><input class="sel" style="font-size:18px;height:44px" type="number" inputmode="numeric" step="5" placeholder="Lue P1" id="ari-pl${i}a"><input class="sel" style="font-size:18px;height:44px" type="number" inputmode="numeric" step="5" placeholder="Lue P2" id="ari-pl${i}b"><button class="btn btn-light" onclick="ariLue(${i})">Mettre à jour</button></div>
+        ${b.pl != null ? `<p class="o-note">Dernière lecture à ${ariHeure(b.tl)} : ${b.pl1 ? b.pl1 + ' bar' : '—'} / ${b.pl2 ? b.pl2 + ' bar' : '—'} → ${b.pl} bar retenus</p>` : ''}
         <button class="btn btn-red ari-go" onclick="ariSortir(${i})">SORTIE DU BINÔME</button>`}
         <button class="text-xs text-ink-500 hover:underline" onclick="if (confirm('Effacer l’engagement de ${esc(b.nom)} ?')) { Object.assign(ariTab.b[${i}], {t: null, pl: null, tl: null, out: null}); ariSauver(); ariDessin(); }">Annuler / nouvel engagement</button>`}
       ${i > 2 ? `<button class="text-xs text-ink-500 hover:underline" onclick="ariTab.b.splice(${i}, 1); ariSauver(); ariDessin()">Retirer ce binôme</button>` : ''}</div>`;
   }).join('');
+  ariTab.b.forEach((b, i) => { if (!b.t) ariAuto(i); });
   ariMaj();
 }
+function ariAuto(i){ const b = ariTab.b[i], e = $('ari-auto' + i); if (!e) return; const p = ariPbin(b.p1, b.p2);
+  e.innerHTML = p ? `Pression retenue (la plus faible) : <b>${p} bar</b> · engagement possible <b>${fN(ariMin(p), 0)} min</b>` : 'Saisissez la pression de chaque porteur.'; }
 function ariEngager(i){
-  const b = ariTab.b[i], p = +b.p;
-  if (!(p > ariTab.p.pmin)) return showToast('Saisissez une pression supérieure à la pression minimale (' + ariTab.p.pmin + ' bar)');
+  const b = ariTab.b[i];
+  if (!(+b.p1 > 0) || !(+b.p2 > 0)) return showToast('Saisissez la pression des 2 porteurs');
+  const p = ariPbin(b.p1, b.p2); b.p = p;
+  if (!(p > ariTab.p.pmin)) return showToast('Pression inférieure à la pression minimale (' + ariTab.p.pmin + ' bar) : engagement impossible');
   b.t = Date.now(); b.out = null; b.pl = null; b.tl = null; ariSauver(); ariDessin();
   showToast(b.nom + ' engagé à ' + ariHeure(b.t) + ' — sortie avant ' + ariHeure(ariSortie(b)));
 }
-function ariLue(i){ const v = oV('ari-pl' + i); if (!(v > 0)) return; const b = ariTab.b[i]; b.pl = v; b.tl = Date.now(); ariSauver(); ariDessin(); }
+function ariLue(i){ const a = oV('ari-pl' + i + 'a'), c = oV('ari-pl' + i + 'b'), v = ariPbin(a, c); if (!(v > 0)) return; const b = ariTab.b[i]; b.pl1 = a || null; b.pl2 = c || null; b.pl = v; b.tl = Date.now(); b.al = 0; ariSauver(); ariDessin(); }
 function ariSortir(i){ ariTab.b[i].out = Date.now(); ariSauver(); ariDessin(); }
 function ariMaj(){
   const now = Date.now();
@@ -3639,14 +3650,14 @@ function ariBip(n){
 function ariTable(){
   const t = $('ari-table'); if (!t) return;
   const now = Date.now();
-  t.innerHTML = `<tr><th>Binôme</th><th>Porteurs</th><th>Mission</th><th>Pression engag.</th><th>Heure engag.</th><th>Sortie avant</th><th>Reste</th><th>Pression lue</th><th>Sorti à</th></tr>`
+  t.innerHTML = `<tr><th>Binôme</th><th>Porteur 1</th><th>Porteur 2</th><th>Mission</th><th>Pression engag.</th><th>Heure engag.</th><th>Sortie avant</th><th>Reste</th><th>Pression lue</th><th>Sorti à</th></tr>`
     + ariTab.b.map(b => { const so = ariSortie(b), r = so ? Math.round((so - now) / 60000) : null, et = ariEtat(b);
-      return `<tr style="${et === 'ko' ? 'background:var(--rouge-bg)' : et === 'wa' ? 'background:var(--orange-bg)' : ''}"><td><b>${esc(b.nom)}</b></td><td>${esc(b.noms || '—')}</td><td>${esc(b.mission || '—')}</td><td>${b.t ? b.p + ' bar' : '—'}</td><td>${ariHeure(b.t)}</td>
+      return `<tr style="${et === 'ko' ? 'background:var(--rouge-bg)' : et === 'wa' ? 'background:var(--orange-bg)' : ''}"><td><b>${esc(b.nom)}</b></td><td>${esc(b.n1 || '—')}${+b.p1 ? ' · ' + b.p1 + ' bar' : ''}</td><td>${esc(b.n2 || '—')}${+b.p2 ? ' · ' + b.p2 + ' bar' : ''}</td><td>${esc(b.mission || '—')}</td><td>${b.t ? b.p + ' bar' : '—'}</td><td>${ariHeure(b.t)}</td>
         <td><b>${so ? ariHeure(so) : '—'}</b></td><td>${b.out ? '—' : r == null ? '—' : r > 0 ? r + ' min' : '<b>DÉPASSÉ</b>'}</td><td>${b.pl != null ? b.pl + ' bar (' + ariHeure(b.tl) + ')' : '—'}</td><td>${b.out ? ariHeure(b.out) : '—'}</td></tr>`; }).join('');
 }
 function ariCopier(){
   const t = 'Contrôle ARI du ' + new Date().toLocaleDateString('fr-FR') + ' (bouteille ' + ariTab.p.vol + ' L, pression mini ' + ariTab.p.pmin + ' bar, ' + ariTab.p.conso + ' L/min)\n'
-    + ariTab.b.map(b => `${b.nom}${b.noms ? ' (' + b.noms + ')' : ''}${b.mission ? ' – ' + b.mission : ''} : ` + (b.t ? `engagé ${ariHeure(b.t)} à ${b.p} bar, sortie avant ${ariHeure(ariSortie(b))}` + (b.pl != null ? `, ${b.pl} bar lus à ${ariHeure(b.tl)}` : '') + (b.out ? `, sorti à ${ariHeure(b.out)}` : '') : 'non engagé')).join('\n');
+    + ariTab.b.map(b => `${b.nom}${ariNoms(b) ? ' (' + [b.n1 && b.n1 + (b.p1 ? ' ' + b.p1 + ' bar' : ''), b.n2 && b.n2 + (b.p2 ? ' ' + b.p2 + ' bar' : '')].filter(Boolean).join(' / ') + ')' : ''}${b.mission ? ' – ' + b.mission : ''} : ` + (b.t ? `engagé ${ariHeure(b.t)} à ${b.p} bar, sortie avant ${ariHeure(ariSortie(b))}` + (b.pl != null ? `, ${b.pl} bar lus à ${ariHeure(b.tl)}` : '') + (b.out ? `, sorti à ${ariHeure(b.out)}` : '') : 'non engagé')).join('\n');
   (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => showToast('Tableau copié')).catch(() => prompt('Copiez :', t));
 }
 
