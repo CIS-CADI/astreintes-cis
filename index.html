@@ -3662,7 +3662,7 @@ function perGps(){
 }
 async function perAdresse(){
   const q = $('per-adr').value.trim(); if (!q) return;
-  try { const r = await (await fetch('https://api-adresse.data.gouv.fr/search/?limit=1&q=' + encodeURIComponent(q))).json(); const f = r.features && r.features[0];
+  try { const r = await (await fetch('https://api-adresse.data.gouv.fr/search/?limit=1&lat=' + perPos[0].toFixed(4) + '&lon=' + perPos[1].toFixed(4) + '&q=' + encodeURIComponent(q))).json(); const f = r.features && r.features[0];
     if (!f) return showToast('Adresse introuvable'); perPlacer([f.geometry.coordinates[1], f.geometry.coordinates[0]], true); showToast(f.properties.label); }
   catch (e) { showToast('Recherche impossible (réseau ?)'); }
 }
