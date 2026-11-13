@@ -168,7 +168,7 @@ h1,h2,h3,.font-head{font-family:Oswald,sans-serif;letter-spacing:.3px}
 /* ===== Tableau de bord ===== */
 .dash-hero{display:flex;flex-wrap:wrap;gap:18px;justify-content:space-between;align-items:flex-end;color:#fff;border-radius:20px;padding:22px 24px;position:relative;overflow:hidden;
   background:radial-gradient(130% 120% at 100% 0%,#2b4a86 0%,transparent 55%),linear-gradient(125deg,#14213d 0%,#1f3460 100%);box-shadow:0 12px 30px rgba(20,33,61,.25)}
-.dash-hero::after{content:"";position:absolute;left:0;right:0;bottom:0;height:4px;background:linear-gradient(90deg,var(--rouge) 0 70%,var(--or) 70% 100%)}
+.dash-hero::after{content:"";position:absolute;left:0;right:0;bottom:0;height:4px;background:var(--or)}
 .hero-date{font-size:13px;opacity:.75;text-transform:capitalize;margin:0}
 .hero-title{font-family:Oswald,sans-serif;font-size:32px;font-weight:600;line-height:1.1;margin:4px 0 12px;text-transform:none;letter-spacing:.3px}
 .hero-chips{display:flex;flex-wrap:wrap;gap:8px}
@@ -495,7 +495,7 @@ tr.row-f td:first-child{box-shadow:inset 4px 0 0 #f0a020}tr.row-s td:first-child
 .cc-prev{border-radius:14px;overflow:hidden;border:1px solid var(--bord);background:var(--gris)}
 .cc-prev .bar{display:flex;align-items:center;gap:10px;padding:10px 12px;background:linear-gradient(120deg,var(--ink),var(--ink-2));color:#fff;font-family:Oswald,sans-serif;letter-spacing:.5px}
 .cc-prev .bar b{font-size:17px}.cc-prev .bar span{margin-left:auto;background:var(--rouge);color:#fff;font-size:12px;padding:5px 10px;border-radius:6px;font-family:Roboto,sans-serif;font-weight:700}
-.cc-prev .lis{height:4px;background:linear-gradient(90deg,var(--rouge) 0 78%,var(--or) 78% 100%)}
+.cc-prev .lis{height:4px;background:var(--or)}
 .cc-prev .chips{display:flex;flex-wrap:wrap;gap:6px;padding:10px 12px}
 .cc-chip{font-size:12px;font-weight:700;padding:4px 10px;border-radius:6px}
 .cc-chip.ok{background:var(--vert-bg);color:var(--vert)}.cc-chip.wa{background:var(--orange-bg);color:var(--orange)}
@@ -646,7 +646,7 @@ tr.row-f td:first-child{box-shadow:inset 4px 0 0 #f0a020}tr.row-s td:first-child
 body{background:linear-gradient(180deg,#e9edf5 0,var(--gris) 320px) no-repeat,var(--gris)}
 /* En-tête : dégradé marine + liseré rouge/or */
 header.app-head{background:linear-gradient(120deg,var(--ink) 0%,var(--ink-2) 100%) !important;border-bottom:0 !important;position:relative}
-header.app-head::after{content:"";display:block;height:4px;background:linear-gradient(90deg,var(--rouge) 0 78%,var(--or) 78% 100%)}
+header.app-head::after{content:"";display:block;height:4px;background:var(--or)}
 header.app-head h1{letter-spacing:1px}
 header.app-head h1::before{content:"";display:inline-block;width:10px;height:10px;border-radius:3px;background:var(--rouge);margin-right:8px;vertical-align:middle;box-shadow:0 0 0 3px color-mix(in srgb,var(--rouge) 30%,transparent)}
 .btn-ghost{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.18);color:#fff}
@@ -704,7 +704,7 @@ nav.sticky{box-shadow:0 2px 8px rgba(20,33,61,.06)}
 /* Fenêtres et connexion */
 .modal{background:rgba(20,33,61,.55);backdrop-filter:blur(2px)}
 .modal-head{background:linear-gradient(120deg,var(--ink),var(--ink-2));border-bottom:0;position:relative}
-.modal-head::after{content:"";position:absolute;left:0;right:0;bottom:0;height:4px;background:linear-gradient(90deg,var(--rouge) 0 78%,var(--or) 78% 100%)}
+.modal-head::after{content:"";position:absolute;left:0;right:0;bottom:0;height:4px;background:var(--or)}
 #login-screen{background:radial-gradient(1200px 600px at 10% -10%,#2a4378 0,transparent 60%),linear-gradient(160deg,var(--ink) 0%,#0e1830 100%)}
 #login-screen .card{border:0;box-shadow:0 24px 60px rgba(0,0,0,.35)}
 .offline{background:var(--or);color:var(--ink)}
@@ -712,7 +712,7 @@ nav.sticky{box-shadow:0 2px 8px rgba(20,33,61,.06)}
 .accent-primary-600{accent-color:var(--rouge)}
 @media print{body{background:#fff}header.app-head::after,.kpi::before{display:none}.tbl tbody tr td{background-color:transparent}}
 </style>
-</head>
+<style id="v21-lisere">.login-bars i{width:55%;max-width:200px;background:#f2b705}.login-bars i + i{display:none}.lg-scr.lcc .login-bars i{background:var(--lg-or)}</style></head>
 <body class="min-h-screen">
 
 <!-- ==================== CONNEXION ==================== -->
