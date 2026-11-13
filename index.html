@@ -4339,6 +4339,19 @@ function agDrag(ev, h){
     saveData(); renderAgents(); showToast('Ordre du personnel enregistré'); };
   document.addEventListener('pointermove', move); document.addEventListener('pointerup', fin); document.addEventListener('pointercancel', fin);
 }
+function dbSitesEl(){
+  let e = $('dash-sites'); if (e) return e;
+  e = document.createElement('div'); e.id = 'dash-sites'; e.className = 'card overflow-hidden';
+  e.innerHTML = `<div class="card-head"><div><h2>Sites &amp; applis SDIS</h2><p>Touchez une case pour ouvrir le site (nouvel onglet).</p></div></div><div id="dash-sites-grid" class="si-grid p-4"></div>`;
+  return e;
+}
+DB_BLOCS.push({id: 'sites', nom: 'Sites & applis SDIS', el: dbSitesEl, larg: 'full'});
+function siCasesHtml(){
+  const r = roleOf(currentUser), adm = isAdminU();
+  return sitesListe().filter(x => adm || siteVoit(x, r)).map(x => `<a class="si-case" href="${esc(x.url)}" target="_blank" rel="noopener" title="${esc(x.url)}"><span class="si-ic">${siIcone(x)}</span><b>${esc(x.nom)}</b></a>`).join('');
+}
+const _renderDashboard22 = renderDashboard;
+renderDashboard = function(){ _renderDashboard22(); const g = $('dash-sites-grid'); if (g) { const h = siCasesHtml(); g.innerHTML = h; $('dash-sites').classList.toggle('hidden', !h); } };
 const _renderAgents22 = renderAgents;
 renderAgents = function(){ _renderAgents22(); agPoignees(); };
 
