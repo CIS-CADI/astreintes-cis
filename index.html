@@ -657,7 +657,7 @@ tr.row-f td:first-child{box-shadow:inset 4px 0 0 #f0a020}tr.row-s td:first-child
 .sa-row .h{cursor:grab;touch-action:none;user-select:none;color:#8a92a6;font-size:18px;padding:4px}
 .sa-row .t{flex:1;min-width:160px}.sa-row .t b{display:block;font-size:14px;color:var(--ink)}.sa-row .t span{display:block;font-size:12px;color:#6b7387;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:420px}
 .sa-vis{display:flex;gap:8px;font-size:12px;color:#4b5263}.sa-vis label{display:flex;align-items:center;gap:3px}
-.acc{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:11.5px;color:#56607a;background:none;border:0}
+.mn-tous{background:#f6f7f9}td.mn-tous{border-left:1px solid #e6e9ee}tr.mn-all td{background:#fbf6e6;font-weight:600;font-size:12.5px}.acc{display:flex;flex-direction:column;align-items:center;gap:5px;font-size:11.5px;color:#56607a;background:none;border:0}
 .acc i{width:34px;height:34px;border-radius:50%;border:3px solid #fff;box-shadow:0 0 0 2px var(--bord)}.acc.on i{box-shadow:0 0 0 3px var(--ink)}.acc.on span{color:var(--ink);font-weight:600}
 .dash-hero{background:radial-gradient(130% 120% at 100% 0%,rgba(255,255,255,.12) 0%,transparent 55%),linear-gradient(125deg,var(--ink) 0%,var(--ink-2) 100%)}
 .app-nav .nav-btn.active{background:var(--ink)}
@@ -1191,7 +1191,7 @@ nav.sticky{box-shadow:0 2px 8px rgba(20,33,61,.06)}
       <div class="card overflow-hidden">
         <div class="card-head"><div><h2>Menus de l’application</h2><p>Renommez les onglets et cochez, pour chaque onglet, les profils qui y ont accès. Les changements s’appliquent à tout le monde (dans la minute). Un onglet ouvert à un profil sans les droits de modification reste en consultation : le serveur refuse ses modifications.</p></div>
           <button class="btn btn-light" onclick="resetMenus()">Tout réafficher</button></div>
-        <div class="overflow-x-auto"><table class="ftbl"><thead><tr><th>Onglet</th><th>Nom affiché</th><th class="text-center">Agent</th><th class="text-center">Formateur</th><th class="text-center">SOG</th><th class="text-center">Admin</th><th></th></tr></thead><tbody id="menus-body"></tbody></table></div>
+        <div class="overflow-x-auto"><table class="ftbl"><thead><tr><th>Onglet</th><th>Nom affiché</th><th class="text-center">Agent</th><th class="text-center">Formateur</th><th class="text-center">SOG</th><th class="text-center">Admin</th><th class="text-center mn-tous">Tous</th><th></th></tr></thead><tbody id="menus-body"></tbody></table></div>
       </div>
       <div class="card overflow-hidden">
         <div class="card-head"><div><h2 id="mp-title">Créer un onglet</h2><p>Une page d’information : consignes, numéros utiles, liens, procédures…</p></div></div>
@@ -4526,8 +4526,34 @@ function renderMenus(){
     return `<tr><td><span class="mn-ico">${uiIco(t.v)}${esc(c ? c.nom : t.orig)}</span>${t.custom ? ' <span class="chip2">créé</span>' : ''}</td>
       <td>${c ? `<span class="text-xs text-ink-500">nom modifiable ci-dessous</span>` : `<input class="sel" style="width:170px" value="${esc((m.labels || {})[t.v] || '')}" placeholder="${esc(t.orig)}" onchange="setMenuLabel('${t.v}', this.value)">`}</td>
       ${PROFILS4.map(r => `<td class="text-center">${cb(r)}</td>`).join('')}
+      <td class="text-center mn-tous">${mnEditables(t.v).length ? `<input type="checkbox" class="w-4 h-4 accent-primary-600 mn-ligne" data-v="${t.v}" title="Cocher / décocher tous les profils pour cet onglet" onchange="mnLigne('${t.v}', this.checked)">` : '<span class="text-ink-300">—</span>'}</td>
       <td class="whitespace-nowrap">${c ? `<button class="text-xs text-primary-600 hover:underline mr-2" onclick="editPage('${c.id}')">Modifier</button><button class="text-xs text-red-700 hover:underline" onclick="supprimerPage('${c.id}')">Supprimer</button>` : ''}</td></tr>`; }).join('');
+  $('menus-body').insertAdjacentHTML('afterbegin', `<tr class="mn-all"><td colspan="2">Tout cocher (tous les onglets)</td>${PROFILS4.map(r => `<td class="text-center"><input type="checkbox" class="w-4 h-4 accent-primary-600 mn-col" data-r="${r}" title="Cocher / décocher cet onglet pour tous les onglets" onchange="mnColonne('${r}', this.checked)"></td>`).join('')}<td class="text-center mn-tous"><input type="checkbox" class="w-4 h-4 accent-primary-600" id="mn-global" title="Tout cocher / tout décocher" onchange="mnGlobal(this.checked)"></td><td></td></tr>`);
+  mnEtats();
   drawPageIcons();
+}
+// ---- cases « tout cocher » ----
+function mnEditables(v){ return MENU_TOUS.includes(v) || MENU_ADMIN.includes(v) ? [] : PROFILS4; }
+function mnEtat(paires){ const n = paires.filter(([v, r]) => menuVisible(v, r)).length; return {all: paires.length > 0 && n === paires.length, some: n > 0 && n < paires.length}; }
+function mnPose(el, e){ if (!el) return; el.checked = e.all; el.indeterminate = e.some; }
+function mnEtats(){
+  const tabs = menuTabs().map(t => t.v), toutes = [];
+  tabs.forEach(v => { const p = mnEditables(v).map(r => [v, r]); toutes.push(...p); mnPose(document.querySelector(`.mn-ligne[data-v="${v}"]`), mnEtat(p)); });
+  PROFILS4.forEach(r => mnPose(document.querySelector(`.mn-col[data-r="${r}"]`), mnEtat(tabs.filter(v => mnEditables(v).includes(r)).map(v => [v, r]))));
+  mnPose($('mn-global'), mnEtat(toutes));
+}
+function mnPoser(v, r, on){ const m = data.menus, x = Object.assign({}, m.vis[v] || {}); if (on === menuBase(v, r)) delete x[r]; else x[r] = on; if (Object.keys(x).length) m.vis[v] = x; else delete m.vis[v]; }
+function mnLigne(v, on){ mnEditables(v).forEach(r => mnPoser(v, r, on)); majMenus(on ? 'Onglet ouvert à tous les profils' : 'Onglet masqué pour tous les profils'); }
+function mnColonne(r, on){
+  const noms = {agent: 'Agent', formateur: 'Formateur', sog: 'SOG', admin: 'Admin'};
+  if (!on && r === 'admin' && !confirm('Masquer tous les onglets pour le profil Admin ? (Menus et Réglages restent accessibles)')) return mnEtats();
+  menuTabs().forEach(t => { if (mnEditables(t.v).includes(r)) mnPoser(t.v, r, on); });
+  majMenus((on ? 'Tous les onglets affichés pour ' : 'Tous les onglets masqués pour ') + noms[r]);
+}
+function mnGlobal(on){
+  if (!on && !confirm('Masquer tous les onglets pour tous les profils ? (Accueil, Mon espace, Menus et Réglages restent accessibles)')) return mnEtats();
+  menuTabs().forEach(t => mnEditables(t.v).forEach(r => mnPoser(t.v, r, on)));
+  majMenus(on ? 'Tous les onglets affichés pour tous' : 'Tous les onglets masqués');
 }
 function majMenus(msg){ saveData(); applyRights(); renderMenus(); if (msg) showToast(msg); }
 function setMenuVis(v, r, on){ const m = data.menus, x = Object.assign({}, m.vis[v] || {}); if (on === menuBase(v, r)) delete x[r]; else x[r] = on; if (Object.keys(x).length) m.vis[v] = x; else delete m.vis[v]; majMenus(on ? 'Onglet affiché' : 'Onglet masqué'); }
