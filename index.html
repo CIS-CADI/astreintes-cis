@@ -489,7 +489,7 @@ tr.row-f td:first-child{box-shadow:inset 4px 0 0 #f0a020}tr.row-s td:first-child
 .switch{position:relative;width:42px;height:24px;flex:0 0 42px;cursor:pointer}.switch input{opacity:0;width:0;height:0}
 .switch i{position:absolute;inset:0;border-radius:99px;background:#cfd5df;transition:.2s}.switch i::after{content:"";position:absolute;left:3px;top:3px;width:18px;height:18px;border-radius:50%;background:#fff;transition:.2s;box-shadow:0 1px 3px rgba(0,0,0,.25)}
 .switch input:checked + i{background:#2e9e5b}.switch input:checked + i::after{transform:translateX(18px)}.switch.lock{opacity:.5;cursor:default}
-.theme-card{display:flex;flex-direction:column;gap:8px;padding:8px;border-radius:14px;border:2px solid var(--bord);background:#fff;font-size:13px;font-weight:600;color:var(--ink)}
+#perso-themes{grid-template-columns:repeat(auto-fill,minmax(132px,1fr))}.theme-card{display:flex;flex-direction:column;gap:8px;padding:8px;border-radius:14px;border:2px solid var(--bord);background:#fff;font-size:13px;font-weight:600;color:var(--ink)}
 .theme-card.on{border-color:var(--rouge);box-shadow:0 0 0 3px rgba(0,0,0,.04)}
 .th-prev{height:54px;border-radius:9px;display:flex;align-items:flex-end;gap:6px;padding:8px}.th-prev i{width:16px;height:16px;border-radius:50%;border:2px solid rgba(255,255,255,.8)}
 .cc-prev{border-radius:14px;overflow:hidden;border:1px solid var(--bord);background:var(--gris)}
@@ -3178,7 +3178,33 @@ const THEMES = {
   marine:  {nom:'Océan', ink:'#0b2545', ink2:'#13406e', rouge:'#1f7ae0', rougeF:'#155cb0', or:'#ffc857', gris:'#eef3f9'},
   nuit:    {nom:'Anthracite', ink:'#111318', ink2:'#2a2f3a', rouge:'#e5484d', rougeF:'#b8373b', or:'#ffb224', gris:'#ecedf0'},
   nexsis:  {nom:'NEXSIS', ink:'#2f3439', ink2:'#4b535b', rouge:'#1d7a52', rougeF:'#155c3d', or:'#f2a54a', gris:'#e7eaed',
-            vert:'#1f6f35', vertBg:'#cfe8cd', orange:'#a3540c', orangeBg:'#f8d7aa', rougeT:'#b0281c', rougeBg:'#f5cdc4', bleu:'#1f5fa8', bleuBg:'#d5e5f6'}};
+            vert:'#1f6f35', vertBg:'#cfe8cd', orange:'#a3540c', orangeBg:'#f8d7aa', rougeT:'#b0281c', rougeBg:'#f5cdc4', bleu:'#1f5fa8', bleuBg:'#d5e5f6'},
+  bspp: {nom:'Brigade SP Paris', ink:'#121212', ink2:'#2e2e2e', rouge:'#c8102e', rougeF:'#9e0c24', or:'#c9a227', gris:'#f3f1ef'},
+  bmpm: {nom:'Marins-pompiers', ink:'#0b1f3a', ink2:'#183a66', rouge:'#d71920', rougeF:'#a91319', or:'#e8c547', gris:'#eff2f6'},
+  secciv: {nom:'Sécurité civile', ink:'#1d1d1b', ink2:'#3a3a36', rouge:'#d52b1e', rougeF:'#a92218', or:'#ffd200', gris:'#f5f4ef'},
+  samu: {nom:'SAMU / SMUR', ink:'#003b5c', ink2:'#00557f', rouge:'#e2001a', rougeF:'#b30015', or:'#00a3e0', gris:'#eef4f8'},
+  dassault: {nom:'Dassault Aviation', ink:'#0a2147', ink2:'#173a72', rouge:'#0057b8', rougeF:'#00438f', or:'#9fb8d6', gris:'#eff2f6'},
+  paf: {nom:'Patrouille de France', ink:'#0a1f5c', ink2:'#1b3a8a', rouge:'#e1000f', rougeF:'#b3000c', or:'#dfe6f5', gris:'#f0f2f8'},
+  armee: {nom:'Camouflage', ink:'#2f3a24', ink2:'#4b5a36', rouge:'#5e7033', rougeF:'#4a5928', or:'#c2a878', gris:'#f2f1ea'},
+  win11: {nom:'Windows 11', ink:'#1c2b4a', ink2:'#2f4a7a', rouge:'#0067c0', rougeF:'#00529c', or:'#4cc2ff', gris:'#f3f3f3'},
+  macos: {nom:'macOS', ink:'#1d1d1f', ink2:'#3a3a3c', rouge:'#0071e3', rougeF:'#0058b0', or:'#a1a1a6', gris:'#f5f5f7'},
+  ubuntu: {nom:'Linux Ubuntu', ink:'#2c001e', ink2:'#5e2750', rouge:'#e95420', rougeF:'#c34113', or:'#f99b11', gris:'#f4f2f3'},
+  mint: {nom:'Linux Mint', ink:'#2b3a2e', ink2:'#3f5a43', rouge:'#3f8a1f', rougeF:'#326e18', or:'#87cf3e', gris:'#f2f5f0'},
+  kali: {nom:'Kali Linux', ink:'#0b1622', ink2:'#1b2b3d', rouge:'#367bf0', rougeF:'#2a62c2', or:'#23d0ff', gris:'#e9eef3'},
+  matrix: {nom:'Terminal Matrix', ink:'#020a02', ink2:'#0b2a0b', rouge:'#0f7a2a', rougeF:'#0a5c1f', or:'#39ff14', gris:'#eef4ee'},
+  android: {nom:'Android Material', ink:'#21005d', ink2:'#4f378b', rouge:'#6750a4', rougeF:'#4f378b', or:'#d0bcff', gris:'#f6f2fa'},
+  switch: {nom:'Switch', ink:'#1f1f24', ink2:'#3a3a42', rouge:'#e60012', rougeF:'#b8000e', or:'#00c3e3', gris:'#f2f2f4'},
+  ps5: {nom:'PS5', ink:'#00205b', ink2:'#003791', rouge:'#0070d1', rougeF:'#0058a6', or:'#7fb6ff', gris:'#eef1f7'},
+  xbox: {nom:'Xbox', ink:'#0e1a0e', ink2:'#1e3a1e', rouge:'#107c10', rougeF:'#0b5e0b', or:'#9bf00b', gris:'#f0f4f0'},
+  steam: {nom:'Steam', ink:'#171a21', ink2:'#1b2838', rouge:'#2a75bb', rougeF:'#1f5a91', or:'#66c0f4', gris:'#eef2f6'},
+  discord: {nom:'Discord', ink:'#1e1f22', ink2:'#313338', rouge:'#5865f2', rougeF:'#4752c4', or:'#57f287', gris:'#f2f3f5'},
+  gamer: {nom:'Gamer néon', ink:'#0d0b1e', ink2:'#2a1458', rouge:'#8b2cf5', rougeF:'#6d1bc4', or:'#00ffa3', gris:'#efedf7'},
+  gamerrouge: {nom:'Gamer rouge', ink:'#111111', ink2:'#2a0a0e', rouge:'#e0002d', rougeF:'#b00024', or:'#ff4d6d', gris:'#f1f0f0'},
+  arcade: {nom:'Rétro arcade', ink:'#1a1033', ink2:'#3b1d6e', rouge:'#e0157a', rougeF:'#b31062', or:'#ffd23f', gris:'#f6f1fa'},
+  glacier: {nom:'Glacier', ink:'#0f2b3d', ink2:'#1c4966', rouge:'#0e7fb8', rougeF:'#0b6593', or:'#9be7ff', gris:'#eef6fa'},
+  soleil: {nom:'Coucher de soleil', ink:'#3b1c32', ink2:'#6a1e55', rouge:'#e4521b', rougeF:'#b84215', or:'#ffc145', gris:'#f8f2f1'},
+  lavande: {nom:'Lavande', ink:'#2d2350', ink2:'#4a3b7d', rouge:'#7c5cc4', rougeF:'#61469e', or:'#c8b6ff', gris:'#f5f3fb'},
+  chocolat: {nom:'Chocolat', ink:'#2b1a12', ink2:'#4a2e20', rouge:'#b5651d', rougeF:'#8f5017', or:'#e8c39e', gris:'#f6f2ee'}};
 const STATUT_DEF = {vert:'#146c34', vertBg:'#dcf5e3', orange:'#9a4a00', orangeBg:'#fff0d6', rougeT:'#9b1520', rougeBg:'#fde2e4', bleu:'#1d4fb8', bleuBg:'#e6efff'};
 const CC_LISTE = [
   ['Interface', [['ink', 'Bandeau du haut', 'en-tête, titres, boutons sombres'], ['ink2', 'Bandeau (dégradé)', 'deuxième teinte de l’en-tête'], ['rouge', 'Couleur d’action', 'boutons, onglet actif, liens'],
