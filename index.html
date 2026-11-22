@@ -232,6 +232,11 @@ h1,h2,h3,.font-head{font-family:Oswald,sans-serif;letter-spacing:.3px}
 .ih-tag.ok{background:#e7f6ec;color:var(--vert)}.ih-tag.ko{background:#fdecea;color:#a3221b}
 .ih-mx td.n{text-align:center;font-weight:600}.ih-mx td.z{text-align:center;color:#c3c8d2}.ih-mx td.n i{display:inline-block;min-width:26px;padding:2px 6px;border-radius:8px;font-style:normal;background:color-mix(in srgb,var(--rouge) calc(var(--k)*100%),#fff);color:var(--ink)}
 .ih-mx th.v{writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;font-size:12px;padding:8px 4px;text-align:left;max-height:150px}
+.prof-sel{appearance:none;-webkit-appearance:none;border:0;border-radius:999px;padding:5px 28px 5px 12px;font-size:12px;font-weight:700;cursor:pointer;max-width:210px;text-overflow:ellipsis;background:#f2c200 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%231f2329' stroke-width='3'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") no-repeat right 9px center;color:#1f2329}
+.prof-sel.vue{background-color:#e0242f;color:#fff;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")}
+.prof-sel option{color:#1f2329;background:#fff;font-weight:500}
+#vue-bandeau{position:sticky;top:0;z-index:40;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap;padding:8px 14px;background:repeating-linear-gradient(45deg,#e0242f,#e0242f 14px,#c81d27 14px,#c81d27 28px);color:#fff;font-size:13.5px;font-weight:600;text-align:center}
+#vue-bandeau button{border:0;border-radius:999px;padding:5px 12px;background:#fff;color:#c81d27;font-weight:700;font-size:12.5px;cursor:pointer}
 .tl-tags{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 .tl-go .i{width:18px;height:18px;color:#a0a7b4}
 .cov-bars{position:relative;display:flex;align-items:flex-end;gap:4px;height:74px;padding-top:4px}
@@ -762,11 +767,12 @@ nav.sticky{box-shadow:0 2px 8px rgba(20,33,61,.06)}
 </style>
 <style id="v21-lisere">.login-bars i{width:55%;max-width:200px;background:#f2b705}.login-bars i + i{display:none}.lg-scr.lcc .login-bars i{background:var(--lg-or)}</style><style id="v29-sidebar">
 @media (min-width:1024px){
-  #app-screen:not(.hidden){display:grid !important;grid-template-columns:252px minmax(0,1fr);grid-template-rows:auto 1fr;align-items:start}
+  #app-screen:not(.hidden){display:grid !important;grid-template-columns:252px minmax(0,1fr);grid-template-rows:auto auto 1fr;align-items:start}
+  #app-screen > #vue-bandeau{grid-column:1/-1;grid-row:2}
   #app-screen > header{grid-column:1/-1;grid-row:1}
-  #app-screen > main{grid-column:2;grid-row:2;max-width:1240px;width:100%;margin:0 auto;padding-left:28px;padding-right:28px}
+  #app-screen > main{grid-column:2;grid-row:3;max-width:1240px;width:100%;margin:0 auto;padding-left:28px;padding-right:28px}
   #app-screen > #tabbar{display:none !important}
-  .app-nav{display:block !important;grid-column:1;grid-row:2;position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;border-bottom:0;border-right:1px solid var(--bord);box-shadow:4px 0 16px rgba(20,33,61,.04);scrollbar-width:thin}
+  .app-nav{display:block !important;grid-column:1;grid-row:3;position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;border-bottom:0;border-right:1px solid var(--bord);box-shadow:4px 0 16px rgba(20,33,61,.04);scrollbar-width:thin}
   .app-nav .nav-inner{display:flex;flex-direction:column;align-items:stretch;gap:2px;overflow:visible;max-width:none;margin:0;padding:16px 12px 40px}
   .app-nav .nav-btn{width:100%;justify-content:flex-start;padding:10px 12px;white-space:normal;text-align:left;line-height:1.25;border-radius:10px;font-size:14px}
   .app-nav .nav-btn .i{width:19px;height:19px;flex:0 0 19px}
@@ -826,6 +832,7 @@ nav.sticky{box-shadow:0 2px 8px rgba(20,33,61,.06)}
         <button id="cnx-btn" class="cnx hidden" onclick="openConnectes()" title="Agents connectés"><i class="dot"></i><b id="cnx-n">–</b><span class="lbl">connecté(s)</span></button>
         <button id="bell" class="bell" onclick="openInbox()" title="Mes messages" aria-label="Mes messages"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8.5a6 6 0 1 1 12 0c0 6 2.5 7.5 2.5 7.5h-17S6 14.5 6 8.5Z"/><path d="M10 19.5a2.1 2.1 0 0 0 4 0"/></svg><span id="bell-n" class="bell-n hidden"></span></button>
         <span id="role-badge" class="text-xs font-semibold px-2.5 py-1 rounded-full"></span>
+        <select id="prof-sel" class="prof-sel hidden" onchange="basculerProfil(+this.value || null)" title="Basculer sur le profil d’un agent"></select>
         <button onclick="refreshState(true)" class="btn btn-ghost hdr-btn" style="padding:6px 12px">Actualiser</button>
         <button onclick="openPwdModal(false)" class="btn btn-ghost hdr-btn" style="padding:6px 12px">Mot de passe</button>
         <button onclick="logout()" class="btn btn-ghost hdr-btn" style="padding:6px 12px">Déconnexion</button>
@@ -833,6 +840,7 @@ nav.sticky{box-shadow:0 2px 8px rgba(20,33,61,.06)}
     </div>
   </header>
 
+  <div id="vue-bandeau" class="hidden no-print"></div>
   <nav class="app-nav no-print" id="app-nav">
     <div class="max-w-6xl mx-auto nav-inner">
       <button onclick="showView('dashboard')" id="nav-dashboard" class="nav-btn " data-short="Tableau de bord"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9v11h5v-6h4v6h5V9"/></svg><span>Tableau de bord</span></button>
@@ -1736,10 +1744,46 @@ function flatten(d){
   Object.keys(d.cps || {}).forEach(id => { const c = d.cps[id]; if (c && Object.keys(c).length) put('cp:' + id, c); });
   return o;
 }
+// ==================== BASCULE DE PROFIL (administrateur) ====================
+let vueAgentId = null;
+try { vueAgentId = +sessionStorage.getItem('astreinte_vue') || null; } catch (e) {}
+function vraiMoi(){ return data ? agentById(meId) : null; }
+function vraiAdmin(){ const m = vraiMoi(); return !!(m && m.isAdmin); }
+function appliquerVue(){
+  const moi = vraiMoi(); if (!moi) return;
+  const cible = vraiAdmin() && vueAgentId && vueAgentId !== moi.id ? agentById(vueAgentId) : null;
+  if (!cible) vueAgentId = null;
+  currentUser = cible || moi;
+}
+function basculerProfil(id){
+  if (!vraiAdmin()) return;
+  vueAgentId = id && id !== meId ? id : null;
+  try { if (vueAgentId) sessionStorage.setItem('astreinte_vue', vueAgentId); else sessionStorage.removeItem('astreinte_vue'); } catch (e) {}
+  appliquerVue();
+  updateHeader(); applyRights(); populateSelects();
+  showView(activeView && $('nav-' + activeView) && !$('nav-' + activeView).classList.contains('hidden') && !$('nav-' + activeView).classList.contains('menu-off') ? activeView : 'dashboard');
+  window.scrollTo(0, 0);
+  showToast(vueAgentId ? 'Vous agissez maintenant en tant que ' + agentName(currentUser) : 'Retour à votre profil administrateur');
+}
+function majProfilSel(){
+  const sel = $('prof-sel'), badge = $('role-badge'), ban = $('vue-bandeau'); if (!sel) return;
+  const adm = vraiAdmin(), moi = vraiMoi();
+  sel.classList.toggle('hidden', !adm); badge.classList.toggle('hidden', adm);
+  if (adm) {
+    const ags = activeAgents().filter(a => a.id !== moi.id).sort((a, b) => agentName(a).localeCompare(agentName(b), 'fr'));
+    sel.innerHTML = `<option value="">Administrateur (moi)</option><optgroup label="Agir en tant que…">${ags.map(a => `<option value="${a.id}" ${a.id === vueAgentId ? 'selected' : ''}>${esc(agentName(a))} · ${esc(a.grade || '')}${a.equipeNum ? ' · Éq. ' + a.equipeNum : ''}</option>`).join('')}</optgroup>`;
+    sel.value = vueAgentId ? String(vueAgentId) : '';
+    sel.classList.toggle('vue', !!vueAgentId);
+  }
+  ban.classList.toggle('hidden', !(adm && vueAgentId));
+  if (adm && vueAgentId) ban.innerHTML = `<span>👁 Vous agissez en tant que <b>${esc(agentName(currentUser))}</b> (${ROLE_LBL[roleOf(currentUser)].toLowerCase()}) : tout ce que vous modifiez est enregistré pour lui et tracé à votre nom dans l’historique.</span><button onclick="basculerProfil(null)">Revenir à mon profil</button>`;
+  document.querySelectorAll('button[onclick="openPwdModal(false)"]').forEach(b => b.classList.toggle('hidden', !!(adm && vueAgentId)));
+}
 function applyState(json){
   const r = JSON.parse(json);
   meId = r.meId; data = r.data; normalize(data); snapshot = flatten(data);
   currentUser = agentById(meId) || null;
+  appliquerVue();
   if (r.sauvegarde !== undefined) lastBackup = r.sauvegarde;
   try { ls() && ls().setItem(CACHE_KEY, JSON.stringify({json, quand: new Date().toISOString()})); } catch(e) {}
   return r;
@@ -1787,7 +1831,7 @@ async function refreshState(force, quiet){
 }
 
 // ==================== CONNEXION ====================
-function forgetToken(){ token = null; currentUser = null; clearInterval(pollTimer); try { ls() && ls().removeItem(TOKEN_KEY); } catch(e) {} }
+function forgetToken(){ vueAgentId = null; try { sessionStorage.removeItem('astreinte_vue'); } catch (e) {} token = null; currentUser = null; clearInterval(pollTimer); try { ls() && ls().removeItem(TOKEN_KEY); } catch(e) {} }
 function showLogin(msg){
   $('app-screen').classList.add('hidden'); $('login-screen').classList.remove('hidden');
   const err = $('login-error');
@@ -1827,6 +1871,7 @@ async function startSession(){
 }
 function updateHeader(){
   const a = currentUser; if (!a) return;
+  try { majProfilSel(); } catch (e) {}
   $('header-user-info').textContent = `${a.prenom} ${a.nom} · ${a.grade}` + (a.equipeNum ? ` · Équipe ${a.equipeNum}` : '');
   const badge = $('role-badge');
   const r = roleOf(a); badge.textContent = ROLE_LBL[r];
