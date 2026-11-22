@@ -751,7 +751,22 @@ nav.sticky{box-shadow:0 2px 8px rgba(20,33,61,.06)}
 .accent-primary-600{accent-color:var(--rouge)}
 @media print{body{background:#fff}header.app-head::after,.kpi::before{display:none}.tbl tbody tr td{background-color:transparent}}
 </style>
-<style id="v21-lisere">.login-bars i{width:55%;max-width:200px;background:#f2b705}.login-bars i + i{display:none}.lg-scr.lcc .login-bars i{background:var(--lg-or)}</style></head>
+<style id="v21-lisere">.login-bars i{width:55%;max-width:200px;background:#f2b705}.login-bars i + i{display:none}.lg-scr.lcc .login-bars i{background:var(--lg-or)}</style><style id="v29-sidebar">
+@media (min-width:1024px){
+  #app-screen:not(.hidden){display:grid !important;grid-template-columns:252px minmax(0,1fr);grid-template-rows:auto 1fr;align-items:start}
+  #app-screen > header{grid-column:1/-1;grid-row:1}
+  #app-screen > main{grid-column:2;grid-row:2;max-width:1240px;width:100%;margin:0 auto;padding-left:28px;padding-right:28px}
+  #app-screen > #tabbar{display:none !important}
+  .app-nav{display:block !important;grid-column:1;grid-row:2;position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;border-bottom:0;border-right:1px solid var(--bord);box-shadow:4px 0 16px rgba(20,33,61,.04);scrollbar-width:thin}
+  .app-nav .nav-inner{display:flex;flex-direction:column;align-items:stretch;gap:2px;overflow:visible;max-width:none;margin:0;padding:16px 12px 40px}
+  .app-nav .nav-btn{width:100%;justify-content:flex-start;padding:10px 12px;white-space:normal;text-align:left;line-height:1.25;border-radius:10px;font-size:14px}
+  .app-nav .nav-btn .i{width:19px;height:19px;flex:0 0 19px}
+  .app-nav .nav-btn.active{box-shadow:0 4px 12px rgba(20,33,61,.18)}
+  .app-nav .nav-sep{border-left:0;border-top:1px solid var(--bord);margin:12px 4px 4px;padding:12px 8px 4px;align-self:stretch}
+  .nav-fl.g{left:266px}
+  .tdb-bar{top:12px}
+}
+</style></head>
 <body class="min-h-screen">
 
 <!-- ==================== CONNEXION ==================== -->
