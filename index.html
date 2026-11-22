@@ -2066,6 +2066,11 @@ function renderGardeBlock(s){
 }
 // Repas du vendredi ou petit-déjeuner du samedi : inscription obligatoire sur le site de l'Amicale
 const AMICALE_URL = 'https://www.amicalesapeurspompierscadillacbeguey.com/com/page/1562';
+function ouvrirAmicale(field){
+  const w = window.open(AMICALE_URL, '_blank');
+  if (w) { try { w.opener = null; } catch (e) {} showToast('Inscrivez-vous sur le site de l’Amicale pour le ' + (field === 'repas' ? 'repas du vendredi' : 'petit-déjeuner du samedi')); }
+  else setTimeout(() => { location.href = AMICALE_URL; }, 600);
+}
 function amicaleHtml(g){
   if (g.repas !== true && g.petitdej !== true) return '';
   const quoi = [g.repas === true ? 'repas du vendredi soir' : '', g.petitdej === true ? 'petit-déjeuner du samedi' : ''].filter(Boolean).join(' et au ');
@@ -2075,7 +2080,8 @@ function amicaleHtml(g){
 }
 function updateGardeField(field, value){
   if (!currentSemaineId) return;
-  const g = getGarde(currentUser.id, currentSemaineId); g[field] = value;
+  const g = getGarde(currentUser.id, currentSemaineId), avant = g[field]; g[field] = value;
+  if ((field === 'repas' || field === 'petitdej') && value === true && avant !== true) setTimeout(() => ouvrirAmicale(field), 0);
   if (field === 'manoeuvre') { if (value !== 'oui') g.profil = null; else if (!g.profil) g.profil = 'manoeuvrant'; if (value !== 'echange') g.echangeManoeuvreId = null; }
   if (field === 'menage' && value !== false) g.echangeMenageId = null;
   if (field === 'entretien' && value !== 'echange') g.echangeEntretienId = null;
