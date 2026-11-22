@@ -223,7 +223,7 @@ h1,h2,h3,.font-head{font-family:Oswald,sans-serif;letter-spacing:.3px}
 .tl-main{flex:1;min-width:0;display:flex;flex-direction:column}
 .tl-title{font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tl-sub{font-size:12px;color:#6b7387}
-.tl-tags{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.tl-dispo{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;background:var(--rouge);color:#fff;white-space:nowrap;cursor:pointer}.tl-dispo:hover{background:var(--rougeF)}.tl-dispo svg{width:14px;height:14px}.rc .rc-dispo{align-self:flex-start;margin-top:6px}.tl-tags{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 .tl-go .i{width:18px;height:18px;color:#a0a7b4}
 .cov-bars{position:relative;display:flex;align-items:flex-end;gap:4px;height:74px;padding-top:4px}
 .cb{flex:1;height:100%;display:flex;align-items:flex-end;background:#f4f6fa;border-radius:6px;overflow:hidden}
@@ -885,6 +885,7 @@ nav.sticky{box-shadow:0 2px 8px rgba(20,33,61,.06)}
           <div class="flex gap-2 flex-wrap items-center">
             <label class="text-sm text-ink-500">Année</label>
             <select id="form-annee" class="sel" onchange="formAnnee = +this.value; renderFormation()"></select>
+            <button id="form-xls-btn" class="btn btn-light hidden" onclick="exportFormationXlsx()" title="Récapitulatif Excel de l’avancement de chaque agent, trié par nom">⬇ Récapitulatif Excel</button>
             <button id="form-add-btn" class="btn btn-red hidden" onclick="openSeanceModal()">+ Saisir une séance</button>
           </div>
         </div>
@@ -1027,7 +1028,7 @@ nav.sticky{box-shadow:0 2px 8px rgba(20,33,61,.06)}
       </div>
 
       <div class="card overflow-hidden">
-        <div class="card-head"><div class="sec-title"><span class="num">2</span><div><h3>Manœuvre &amp; ménage</h3><p>Vendredi soir (manœuvre + repas) et samedi matin (entretien du casernement)</p></div></div></div>
+        <div class="card-head"><div class="sec-title"><span class="num">2</span><div><h3>Manœuvre &amp; entretien</h3><p>Vendredi soir (manœuvre + repas) et samedi matin (entretien du casernement 8h-12h)</p></div></div></div>
         <div class="p-5 grid grid-cols-1 md:grid-cols-2 gap-5" id="garde-content"></div>
       </div>
     </section>
@@ -1066,7 +1067,7 @@ nav.sticky{box-shadow:0 2px 8px rgba(20,33,61,.06)}
       </div>
 
       <div class="card overflow-hidden">
-        <div class="card-head"><div class="sec-title"><span class="num">2</span><div><h3>Manœuvre &amp; ménage</h3><p>Réponses de l'équipe et remplaçants – modifiables directement dans le tableau</p></div></div></div>
+        <div class="card-head"><div class="sec-title"><span class="num">2</span><div><h3>Manœuvre &amp; entretien</h3><p>Réponses de l'équipe et remplaçants – modifiables directement dans le tableau</p></div></div></div>
         <div class="overflow-x-auto" id="manoeuvre-table"></div>
         <div class="overflow-x-auto border-t" style="border-color:var(--bord)" id="manoeuvre-summary-content"></div>
       </div>
@@ -1329,7 +1330,7 @@ nav.sticky{box-shadow:0 2px 8px rgba(20,33,61,.06)}
     <!-- ===== SYNTHÈSE SOG ===== -->
     <section id="view-synthese" class="view hidden space-y-5">
       <div class="card p-4 flex flex-wrap items-center justify-between gap-3 no-print">
-        <div><h2 class="text-lg uppercase">Synthèse SOG</h2><p class="text-xs text-ink-500">Manœuvre, ménage et affectation des piquets – à imprimer pour le SOG</p></div>
+        <div><h2 class="text-lg uppercase">Synthèse SOG</h2><p class="text-xs text-ink-500">Manœuvre, entretien et affectation des piquets – à imprimer pour le SOG</p></div>
         <div class="flex items-center gap-2 flex-wrap">
           <select id="synthese-semaine-select" onchange="renderSynthese();renderSyntheseEdit()" class="sel"></select>
           <button onclick="printSynthese()" class="btn btn-red" style="padding:6px 12px">Imprimer</button>
@@ -1338,7 +1339,7 @@ nav.sticky{box-shadow:0 2px 8px rgba(20,33,61,.06)}
       </div>
       <div class="card p-6 overflow-x-auto"><div id="synthese-sheet" class="sy"></div></div>
       <div class="card overflow-hidden no-print">
-        <div class="card-head"><div class="sec-title"><span class="num">✎</span><div><h3>Modifier les réponses de l'équipe</h3><p>SOG et administrateurs : manœuvre, ménage, entretien du samedi et remplaçants. La feuille ci-dessus se met à jour aussitôt.</p></div></div></div>
+        <div class="card-head"><div class="sec-title"><span class="num">✎</span><div><h3>Modifier les réponses de l'équipe</h3><p>SOG et administrateurs : manœuvre, entretien du samedi et remplaçants. La feuille ci-dessus se met à jour aussitôt.</p></div></div></div>
         <div class="overflow-x-auto" id="synthese-edit"></div>
       </div>
     </section>
@@ -1384,6 +1385,7 @@ nav.sticky{box-shadow:0 2px 8px rgba(20,33,61,.06)}
       </div>
       <div><p class="text-sm font-medium mb-1.5">Compétences de conduite</p><div id="agent-cods" class="cod-pick"></div></div>
       <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="agent-sog" class="w-4 h-4 accent-primary-600"> Responsable SOG (GIPSI)</label>
+      <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="agent-secr" class="w-4 h-4 accent-primary-600"> Secrétariat (récapitulatif Excel des formations)</label>
       <label class="flex items-center gap-2 text-sm"><input type="checkbox" id="agent-admin" class="w-4 h-4 accent-primary-600"> Compte administrateur</label>
       <div class="flex justify-end gap-2 pt-2"><button onclick="closeAgentModal()" class="btn btn-light">Annuler</button><button onclick="saveAgent()" class="btn btn-red">Enregistrer</button></div>
     </div>
@@ -1681,6 +1683,7 @@ function flatten(d){
     if (a.equipesSup && a.equipesSup.length) x.equipesSup = a.equipesSup;
     if (Array.isArray(a.cod)) x.cod = a.cod;
     if (a.rang) x.rang = a.rang;
+    if (a.secretaire) x.secretaire = true;
     if (a.actif === false) x.actif = false;
     return x;
   }));
@@ -2016,6 +2019,9 @@ function getGarde(agentId, semId, d){
   if (!d.garde[agentId][semId]) d.garde[agentId][semId] = {manoeuvre:null, profil:null, echangeManoeuvreId:null, repas:null, menage:null, echangeMenageId:null, entretien:null, echangeEntretienId:null};
   return d.garde[agentId][semId];
 }
+function entOui(g){ return g.entretien === 'oui' || (g.entretien == null && g.menage === true); }
+function entNon(g){ return g.entretien === 'non' || (g.entretien == null && g.menage === false && !g.echangeMenageId); }
+function entRemp(g){ return g.entretien === 'echange' ? g.echangeEntretienId : (g.entretien == null && g.menage === false ? g.echangeMenageId : null); }
 function peekGarde(agentId, semId){ return (data.garde[agentId] || {})[semId] || {}; }
 function agentOptions(selected){
   return activeAgents().filter(a => a.id !== currentUser.id).sort((a, b) => agentName(a).localeCompare(agentName(b),'fr'))
@@ -2037,11 +2043,9 @@ function renderGardeBlock(s){
       <div><p class="text-sm font-medium mb-1.5">Présent au repas</p>${pills('repas', [[true,'Oui','g'],[false,'Non','r']], g.repas)}</div>
     </div>
     <div class="rounded-xl border p-4 space-y-4" style="border-color:var(--bord)">
-      <h4 class="font-head uppercase">Ménage &amp; entretien samedi 8h-12h</h4>
+      <h4 class="font-head uppercase">Samedi matin · entretien du casernement 8h-12h</h4>
       <div><p class="text-sm font-medium mb-1.5">Présent au petit-déjeuner</p>${pills('petitdej', [[true,'Oui','g'],[false,'Non','r']], g.petitdej)}</div>
-      <div><p class="text-sm font-medium mb-1.5">Ménage</p>${pills('menage', [[true,'OUI','g'],[false,'NON','r']], g.menage)}
-        ${g.menage === false ? sel('echangeMenageId', g.echangeMenageId) : ''}</div>
-      <div><p class="text-sm font-medium mb-1.5">Entretien du casernement</p>${pills('entretien', [['oui','Présent','g'],['non','Absent','r'],['echange','Échange','o']], g.entretien)}
+      <div><p class="text-sm font-medium mb-1.5">Entretien samedi matin <span class="text-ink-500 font-normal">(4 h · de 8h à 12h)</span></p>${pills('entretien', [['oui','Présent','g'],['non','Absent','r'],['echange','Échange','o']], g.entretien)}
         ${g.entretien === 'echange' ? sel('echangeEntretienId', g.echangeEntretienId) : ''}</div>
     </div>${amicaleHtml(g)}`;
 }
@@ -2089,12 +2093,12 @@ function renderPlanningGlobal(){
 
   // Indicateurs
   const gs = st.ags.map(a => peekGarde(a.id, s.id));
-  const manOui = gs.filter(g => g.manoeuvre === 'oui').length, menOui = gs.filter(g => g.menage === true).length;
+  const manOui = gs.filter(g => g.manoeuvre === 'oui').length, menOui = gs.filter(entOui).length;
   $('planning-kpis').innerHTML = [
     ['Effectif équipe', st.ags.length + ' agents', ''],
     ['Créneaux au minimum', st.auMin + ' / 12', st.auMin === 12 ? 'text-green-700' : 'text-primary-600'],
     ['Dispos manœuvre', manOui + ' OUI', ''],
-    ['Dispos ménage', menOui + ' OUI', '']
+    ['Dispos entretien samedi', menOui + ' présent' + (menOui > 1 ? 's' : ''), '']
   ].map(([l, v, c]) => `<div class="card kpi"><div class="lbl">${l}</div><div class="val ${c}">${v}</div></div>`).join('');
 
   // Tableau des créneaux
@@ -2153,12 +2157,12 @@ function renderManoeuvreTable(s, ags, target){
     .sort((x, y) => agentName(x).localeCompare(agentName(y),'fr')).map(x => [x.id, esc(agentName(x)) + ' (' + x.grade + ')'])), cur, 150, cur ? '#ffedd5' : (cur === null ? '#fff7ed' : ''));
   const col = v => v === 'oui' || v === true ? '#dcfce7' : v === 'non' || v === false ? '#fee2e2' : v === 'echange' ? '#ffedd5' : '';
   const YN = [['', '—'], ['true', 'Oui'], ['false', 'Non']];
-  let h = `<table class="tbl"><thead><tr><th class="sticky-col text-left">Personnel</th><th>Fonction</th><th>Manœuvre</th><th class="text-left">Remplaçant manœuvre</th><th>Profil</th><th>Repas</th><th>Petit-déj</th><th>Ménage</th><th class="text-left">Remplaçant ménage</th><th>Entretien samedi</th><th class="text-left">Remplaçant entretien</th></tr></thead><tbody>`;
+  let h = `<table class="tbl"><thead><tr><th class="sticky-col text-left">Personnel</th><th>Fonction</th><th>Manœuvre</th><th class="text-left">Remplaçant manœuvre</th><th>Profil</th><th>Repas</th><th>Petit-déj</th><th>Entretien samedi 8h-12h</th><th class="text-left">Remplaçant entretien</th></tr></thead><tbody>`;
   let mo = 0, mn = 0, eo = 0, en = 0, rm = 0, re = 0, ro = 0, rp = 0, pd = 0;
   ags.forEach(a => {
     const g = peekGarde(a.id, s.id);
-    if (g.manoeuvre === 'oui') mo++; if (g.manoeuvre === 'non') mn++; if (g.menage === true) eo++; if (g.menage === false) en++;
-    if (g.echangeManoeuvreId) rm++; if (g.echangeMenageId) re++; if (g.echangeEntretienId) ro++; if (g.repas === true) rp++; if (g.petitdej === true) pd++;
+    if (g.manoeuvre === 'oui') mo++; if (g.manoeuvre === 'non') mn++; if (entOui(g)) eo++; if (entNon(g)) en++;
+    if (g.echangeManoeuvreId) rm++; if (entRemp(g)) ro++; if (g.repas === true) rp++; if (g.petitdej === true) pd++;
     const nm = id => id ? esc(agentName(agentById(id))) : '';
     if (edit) {
       h += `<tr><td class="sticky-col font-medium">${esc(agentName(a))}</td><td class="text-center">${gradeBadge(a.grade)}</td>
@@ -2167,20 +2171,18 @@ function renderManoeuvreTable(s, ags, target){
         <td class="text-center">${g.manoeuvre === 'oui' ? sel(a, 'profil', [['manoeuvrant', 'Manœuvrant'], ['formateur', 'Formateur']], g.profil, 100) : ''}</td>
         <td class="text-center">${sel(a, 'repas', YN, g.repas, 64, col(g.repas))}</td>
         <td class="text-center">${sel(a, 'petitdej', YN, g.petitdej, 64, col(g.petitdej))}</td>
-        <td class="text-center">${sel(a, 'menage', YN.map(x => [x[0], x[1] === 'Oui' ? 'OUI' : x[1] === 'Non' ? 'NON' : x[1]]), g.menage, 70, col(g.menage))}</td>
-        <td>${g.menage === false ? remp(a, 'echangeMenageId', g.echangeMenageId) : ''}</td>
         <td class="text-center">${sel(a, 'entretien', [['', '—'], ['oui', 'Présent'], ['non', 'Absent'], ['echange', 'Échange']], g.entretien, 90, col(g.entretien))}</td>
         <td>${g.entretien === 'echange' ? remp(a, 'echangeEntretienId', g.echangeEntretienId) : ''}</td></tr>`;
     } else {
       const man = g.manoeuvre === 'echange' ? '<span class="font-semibold text-orange-700">Échange</span>' : yn(g.manoeuvre, 'oui', 'non');
-      const ent = g.entretien === 'oui' ? 'Présent' : g.entretien === 'non' ? 'Absent' : g.entretien === 'echange' ? 'Échange' : '–';
+      const ent = entOui(g) ? 'Présent' : entNon(g) ? 'Absent' : entRemp(g) || g.entretien === 'echange' ? 'Échange' : '–';
       h += `<tr><td class="sticky-col font-medium">${esc(agentName(a))}</td><td class="text-center">${gradeBadge(a.grade)}</td>
         <td class="text-center">${man}</td><td>${nm(g.echangeManoeuvreId)}</td><td class="text-center text-xs">${g.profil === 'formateur' ? 'Formateur' : g.profil ? 'Manœuvrant' : ''}</td>
-        <td class="text-center">${yn(g.repas, true, false)}</td><td class="text-center">${yn(g.petitdej, true, false)}</td><td class="text-center">${yn(g.menage, true, false)}</td><td>${nm(g.echangeMenageId)}</td>
-        <td class="text-center text-xs">${ent}</td><td>${nm(g.echangeEntretienId)}</td></tr>`;
+        <td class="text-center">${yn(g.repas, true, false)}</td><td class="text-center">${yn(g.petitdej, true, false)}</td>
+        <td class="text-center text-xs">${ent}</td><td>${nm(entRemp(g))}</td></tr>`;
     }
   });
-  h += `<tr class="tot"><td class="sticky-col" style="background:#fafbfc">TOTAL</td><td></td><td class="text-center">${mo} OUI / ${mn} NON</td><td>${rm} remplaçant(s)</td><td></td><td class="text-center">${rp} repas</td><td class="text-center">${pd} petit-déj</td><td class="text-center">${eo} OUI / ${en} NON</td><td>${re} remplaçant(s)</td><td></td><td>${ro} remplaçant(s)</td></tr>`;
+  h += `<tr class="tot"><td class="sticky-col" style="background:#fafbfc">TOTAL</td><td></td><td class="text-center">${mo} OUI / ${mn} NON</td><td>${rm} remplaçant(s)</td><td></td><td class="text-center">${rp} repas</td><td class="text-center">${pd} petit-déj</td><td class="text-center">${eo} présent(s) / ${en} absent(s)</td><td>${ro} remplaçant(s)</td></tr>`;
   $(target).innerHTML = h + '</tbody></table>';
 }
 function renderManoeuvreSummary(s){
@@ -2380,10 +2382,10 @@ function openAgentModal(id){
   $('agent-nom').value = a ? a.nom : ''; $('agent-prenom').value = a ? a.prenom : '';
   $('agent-grade').value = a ? a.grade : 'EQ'; $('agent-rang').innerHTML = rangOptions(a ? agentRang(a) : 'sap'); $('agent-equipe').value = a && a.equipeNum ? a.equipeNum : '';
   $('agent-identifiant').value = a ? a.identifiant || '' : '';
-  $('agent-sog').checked = !!(a && a.sog); $('agent-admin').checked = !!(a && a.isAdmin);
+  $('agent-sog').checked = !!(a && a.sog); $('agent-secr').checked = !!(a && a.secretaire); $('agent-admin').checked = !!(a && a.isAdmin);
   const mesCods = a ? agentCods(a) : [];
   $('agent-cods').innerHTML = codList().map(c => `<label><input type="checkbox" value="${c}" class="w-4 h-4 accent-primary-600" ${mesCods.includes(c) ? 'checked' : ''}>${c}</label>`).join('');
-  $('agent-admin').closest('label').classList.add('hidden'); $('agent-sog').closest('label').classList.toggle('hidden', !isAdminU());
+  $('agent-admin').closest('label').classList.add('hidden'); $('agent-sog').closest('label').classList.toggle('hidden', !isAdminU()); $('agent-secr').closest('label').classList.toggle('hidden', !isAdminU());
   $('agent-modal').classList.remove('hidden');
 }
 function closeAgentModal(){ $('agent-modal').classList.add('hidden'); editingAgentId = null; }
@@ -2397,7 +2399,7 @@ function saveAgent(){
   const vals = {nom, prenom, grade: $('agent-grade').value, equipeNum: $('agent-equipe').value ? +$('agent-equipe').value : null,
     identifiant, rang: $('agent-rang').value || undefined, cod: [...document.querySelectorAll('#agent-cods input:checked')].map(i => i.value)
       .concat(editingAgentId ? agentCods(agentById(editingAgentId)).filter(c => !codList().includes(c)) : []),
-    sog: isAdminU() ? $('agent-sog').checked : !!(editingAgentId && agentById(editingAgentId).sog), isAdmin: !!(editingAgentId && agentById(editingAgentId).isAdmin)};
+    sog: isAdminU() ? $('agent-sog').checked : !!(editingAgentId && agentById(editingAgentId).sog), secretaire: isAdminU() ? $('agent-secr').checked : !!(editingAgentId && agentById(editingAgentId).secretaire), isAdmin: !!(editingAgentId && agentById(editingAgentId).isAdmin)};
   if (editingAgentId) Object.assign(agentById(editingAgentId), vals);
   else data.agents.push(Object.assign({id: Math.max(0, ...data.agents.map(a => a.id)) + 1, ordre: Math.max(0, ...data.agents.filter(a => a.id !== 99).map(a => a.ordre||0)) + 1}, vals));
   saveData(); closeAgentModal(); renderAgents(); showToast('Agent enregistré');
@@ -2491,10 +2493,9 @@ function getEntretien(semId){ const e = data.entretien[semId] = data.entretien[s
 function equipeMenage(s){
   const team = teamAgents(s), list = [];
   team.forEach(a => { const g = peekGarde(a.id, s.id);
-    if (g.menage === true) list.push({agent:a, role:'OUI'});
-    else if (g.entretien === 'oui') list.push({agent:a, role:'Entretien'}); });
+    if (entOui(g)) list.push({agent:a, role:'Présent'}); });
   team.forEach(a => { const g = peekGarde(a.id, s.id);
-    [[g.menage === false, g.echangeMenageId], [g.entretien === 'echange', g.echangeEntretienId]].forEach(([ok, rid]) => {
+    [[true, entRemp(g)]].forEach(([ok, rid]) => {
       const r = ok && rid && agentById(rid);
       if (r && !list.some(x => x.agent.id === r.id)) list.push({agent:r, role:'Remplaçant', original:a}); }); });
   return list;
@@ -2522,7 +2523,7 @@ function renderEntretien(){
   const choix = pers.map(p => p.agent);
   Object.keys(st.byAgent).forEach(id => { const a = agentById(id); if (a && !choix.includes(a)) choix.push(a); });
   let h = '';
-  if (!pers.length) h += '<p class="text-sm mb-4 rounded-lg p-3" style="background:#fff7ed;color:var(--orange);border:1px solid #fed7aa">Personne n’a encore répondu « Oui » au ménage ou à l’entretien pour cette semaine.</p>';
+  if (!pers.length) h += '<p class="text-sm mb-4 rounded-lg p-3" style="background:#fff7ed;color:var(--orange);border:1px solid #fed7aa">Personne n’a encore répondu « Présent » à l’entretien du samedi matin pour cette semaine.</p>';
   else h += `<div class="mb-4"><p class="text-xs uppercase tracking-wider text-ink-500 mb-2">Répartition du personnel</p><div class="flex flex-wrap gap-2">${choix.map(a => {
       const n = (st.byAgent[a.id] || []).length;
       return `<span class="rep ${n === 0 ? 'rep-0' : ''}" title="${esc((st.byAgent[a.id] || []).join(', ') || 'Non affecté')}">${pastille(a.id, st)}${esc(agentName(a))} · ${n === 0 ? 'non affecté' : n + ' piquet' + (n > 1 ? 's' : '')}</span>`; }).join('')}</div>
@@ -2577,14 +2578,14 @@ function renderSynthese(){
     parts.map((p, i) => `<tr><td>${i+1}</td><td><b>${esc(agentName(p.agent))}</b></td><td>${gradeBadge(p.agent.grade)}</td><td>${p.profil === 'formateur' ? 'Formateur' : 'Manœuvrant'}</td><td>${p.repas === true ? 'Oui' : p.repas === false ? 'Non' : '–'}</td><td class="muted">${p.original ? 'Remplace ' + esc(agentName(p.original)) : ''}</td><td></td></tr>`).join('') + '</tbody></table>'
     : '<p class="muted">Personne n’est inscrit à la manœuvre.</p>';
   man += `<div class="note">${nonMan.length ? '<b>Ne font pas la manœuvre :</b> ' + names(nonMan) + '. ' : ''}${nrMan.length ? '<span class="warn">Sans réponse :</span> ' + names(nrMan) + '.' : ''}</div>`;
-  // 2. Ménage et piquets par personne
-  const nonMen = team.filter(a => { const g = peekGarde(a.id, s.id); return g.menage === false && !g.echangeMenageId; });
+  // 2. Entretien et piquets par personne
+  const nonMen = team.filter(a => entNon(peekGarde(a.id, s.id)));
   const nrMen = team.filter(a => { const g = peekGarde(a.id, s.id); return g.menage == null && !g.entretien && !pers.some(p => p.agent.id === a.id); });
-  let men = pers.length ? `<table><thead><tr><th style="width:28px">N°</th><th>Personnel</th><th>Grade</th><th>Ménage</th><th>Piquet(s) affecté(s)</th><th style="width:90px">Émargement</th></tr></thead><tbody>` +
+  let men = pers.length ? `<table><thead><tr><th style="width:28px">N°</th><th>Personnel</th><th>Grade</th><th>Entretien</th><th>Piquet(s) affecté(s)</th><th style="width:90px">Émargement</th></tr></thead><tbody>` +
     pers.map((p, i) => { const pq = st.byAgent[p.agent.id] || [];
       return `<tr><td>${i+1}</td><td><b>${esc(agentName(p.agent))}</b></td><td>${gradeBadge(p.agent.grade)}</td><td>${p.role === 'Remplaçant' ? 'Remplace ' + esc(agentName(p.original)) : p.role}</td><td>${pq.length ? esc(pq.join(', ')) + ' ' + pastille(p.agent.id, st) : '<span class="warn">Non affecté</span>'}</td><td></td></tr>`; }).join('') + '</tbody></table>'
-    : '<p class="muted">Personne n’est inscrit au ménage.</p>';
-  men += `<div class="note">${nonMen.length ? '<b>Ne font pas le ménage :</b> ' + names(nonMen) + '. ' : ''}${nrMen.length ? '<span class="warn">Sans réponse :</span> ' + names(nrMen) + '.' : ''}</div>`;
+    : '<p class="muted">Personne n’est inscrit à l’entretien.</p>';
+  men += `<div class="note">${nonMen.length ? '<b>Absents à l’entretien :</b> ' + names(nonMen) + '. ' : ''}${nrMen.length ? '<span class="warn">Sans réponse :</span> ' + names(nrMen) + '.' : ''}</div>`;
   // 3. Piquets
   const maxP = Math.max(1, ...data.vehicules.map(v => v.places));
   const piq = data.vehicules.length ? `<table><thead><tr><th>Piquet</th>${Array.from({length:maxP}, (_, i) => `<th>Place ${i+1}</th>`).join('')}</tr></thead><tbody>` +
@@ -2596,10 +2597,10 @@ function renderSynthese(){
     <div class="sy-head">
       <div><div class="sy-kicker">CIS Cadillac-Béguey · Synthèse SOG</div><div class="sy-title">${esc(s.label)}</div>
         <div class="sy-sub">Du ${longDate(s.debut)} 19h au ${longDate(s.fin)} 4h · Équipe ${s.equipeNum} · ${team.length} agents</div></div>
-      <div class="sy-box"><b>Responsable SOG :</b> ${sog}<br><b>Manœuvre :</b> ${parts.length} · <b>Ménage :</b> ${pers.length}<br><span class="muted">Édité le ${new Date().toLocaleDateString('fr-FR')}</span></div>
+      <div class="sy-box"><b>Responsable SOG :</b> ${sog}<br><b>Manœuvre :</b> ${parts.length} · <b>Entretien :</b> ${pers.length}<br><span class="muted">Édité le ${new Date().toLocaleDateString('fr-FR')}</span></div>
     </div>
     <div class="sy-h"><span>1. Manœuvre – vendredi soir 19h-23h</span><span>${parts.length} personne(s)</span></div>${man}
-    <div class="sy-h"><span>2. Ménage &amp; entretien – samedi 8h-12h</span><span>${pers.length} personne(s)</span></div>${men}
+    <div class="sy-h"><span>2. Entretien du casernement – samedi 8h-12h (4 h)</span><span>${pers.length} personne(s)</span></div>${men}
     <div class="sy-h"><span>3. Affectation par piquet</span><span>${libres} place(s) libre(s)</span></div>${piq}
     ${st.multi.length ? `<div class="note">Pastille de couleur = personne affectée à plusieurs piquets (${st.multi.map(id => `${pastille(id, st)} ${esc(agentName(agentById(id)))}`).join(' · ')}).</div>` : ''}
     <div class="sy-h"><span>4. Consignes</span></div>
@@ -2635,9 +2636,8 @@ function ring(v, max, cls){
 }
 function gardeChips(g){
   const m = g.manoeuvre === 'oui' ? ['ok', g.profil === 'formateur' ? 'Manœuvre : formateur' : 'Manœuvre : oui'] : g.manoeuvre === 'non' ? ['ko', 'Manœuvre : non'] : g.manoeuvre === 'echange' ? ['mid', 'Manœuvre : échange'] : ['', 'Manœuvre : à renseigner'];
-  const me = g.menage === true ? ['ok', 'Ménage : oui'] : g.menage === false ? ['ko', 'Ménage : non'] : ['', 'Ménage : à renseigner'];
-  const en = g.entretien === 'oui' ? ['ok', 'Entretien : présent'] : g.entretien === 'non' ? ['ko', 'Entretien : absent'] : g.entretien === 'echange' ? ['mid', 'Entretien : échange'] : ['', 'Entretien : à renseigner'];
-  return [m, me, en].map(([c, t]) => `<span class="chip2 ${c}">${t}</span>`).join('');
+  const en = entOui(g) ? ['ok', 'Entretien : présent'] : entNon(g) ? ['ko', 'Entretien : absent'] : entRemp(g) || g.entretien === 'echange' ? ['mid', 'Entretien : échange'] : ['', 'Entretien : à renseigner'];
+  return [m, en].map(([c, t]) => `<span class="chip2 ${c}">${t}</span>`).join('');
 }
 function currentTeamWeek(){
   const t = todayISO(), all = sortedSemaines(data.semaines);
@@ -2687,7 +2687,7 @@ function renderDashboard(){
       </div>
       <div class="next-actions">
         <button class="btn btn-red" onclick="goDispo('${next.id}')">${uiIco('dispo')}Saisir mes dispos</button>
-        <button class="btn btn-light" onclick="goDispo('${next.id}', true)">${uiIco('flag')}Manœuvre &amp; ménage</button>
+        <button class="btn btn-light" onclick="goDispo('${next.id}', true)">${uiIco('flag')}Manœuvre &amp; entretien</button>
       </div></div>`; })()
     : `<div class="p-6 flex items-center gap-4 text-sm text-ink-500"><span class="empty-ic">${uiIco('dispo')}</span>Aucune astreinte à venir pour votre équipe.</div>`;
   // Messages
@@ -2708,7 +2708,7 @@ function renderDashboard(){
     return `<button class="tl-row" onclick="goDispo('${s.id}')">
       <span class="tl-date"><b>${d.getDate()}</b>${d.toLocaleDateString('fr-FR', {month: 'short'}).replace('.', '')}</span>
       <span class="tl-main"><span class="tl-title">${esc(s.label)}</span><span class="tl-sub">${semPeriode(s)} · ${quand}</span></span>
-      <span class="tl-tags"><span class="chip2 ${ff === 12 ? 'ok' : ff ? 'mid' : ''}">${ff}/12</span><span class="chip2 ${g.manoeuvre === 'oui' ? 'ok' : g.manoeuvre === 'non' ? 'ko' : g.manoeuvre === 'echange' ? 'mid' : ''}">${man}</span></span>
+      <span class="tl-tags"><span class="chip2 ${ff === 12 ? 'ok' : ff ? 'mid' : ''}">${ff}/12</span><span class="chip2 ${g.manoeuvre === 'oui' ? 'ok' : g.manoeuvre === 'non' ? 'ko' : g.manoeuvre === 'echange' ? 'mid' : ''}">${man}</span><span class="tl-dispo" role="button" tabindex="0" onclick="event.stopPropagation(); goDispo('${s.id}')">${uiIco('dispo')}Mes dispos</span></span>
       <span class="tl-go">${uiIco('chev')}</span></button>`; }).join('') + '</div>'
     : `<p class="p-5 text-sm text-ink-500">Aucune astreinte à venir.</p>`;
   renderDashFormation();
@@ -2798,6 +2798,7 @@ function renderFormation(){
   const gest = isFormateur(), comps = data.formation.competences;
   if (!formComp || !compByCode(formComp)) formComp = (comps.find(c => c.participants.length) || comps[0] || {}).code || null;
   $('form-add-btn').classList.toggle('hidden', !gest || !formComp);
+  $('form-xls-btn').classList.toggle('hidden', !peutExporterFormation());
   $('form-comps').classList.toggle('hidden', !gest);
   $('form-sub').textContent = gest ? 'Vous pouvez saisir les heures (profil ' + ROLE_LBL[roleOf(currentUser)].toLowerCase() + ').' : 'Votre progression. Seuls les formateurs conduite saisissent les heures.';
   $('form-comps').innerHTML = comps.map(c => `<button class="comp-tab ${c.code === formComp ? 'on' : ''}" onclick="formComp='${c.code}'; formAgent=null; renderFormation()">${esc(c.nom || c.code)} <span class="n">${c.participants.length} agent${c.participants.length > 1 ? 's' : ''}</span></button>`).join('')
@@ -4771,7 +4772,7 @@ function renderDashRecap(){
   const mine = sortedSemaines(data.semaines.filter(s => me.equipeNum && inTeam(me, s.equipeNum)));
   const an = mine.filter(s => s.debut.slice(0, 4) === year), avenir = mine.filter(s => !semFinie(s)).slice(0, 4);
   const cren = avenir.reduce((t, s) => t + nbFilled(me.id, s.id), 0), crenTot = avenir.length * 12;
-  const gs = an.map(s => peekGarde(me.id, s.id)), nbMen = gs.filter(g => g.menage === true).length, nbForm = gs.filter(g => g.manoeuvre === 'oui' && g.profil === 'formateur').length;
+  const gs = an.map(s => peekGarde(me.id, s.id)), nbMen = gs.filter(entOui).length, nbForm = gs.filter(g => g.manoeuvre === 'oui' && g.profil === 'formateur').length;
   const items = data.arbre.branches.flatMap(b => b.items), cs = items.length ? cpStats(me.id, items) : null;
   const comps = data.formation.competences.filter(c => participantRole(c, me.id));
   let fh = 0, fo = 0; comps.forEach(c => { const st = agentStats(c, +year, me.id); fh += st.faites; fo += Math.max(st.obj, 0); });
@@ -4785,9 +4786,10 @@ function renderDashRecap(){
   const cwSogs = cwSog.length ? cwSog : (cw ? activeAgents().filter(a => a.id !== 99 && inTeam(a, cw.equipeNum) && (a.sog || a.isAdmin)) : []);
   let tiles = [
     t(isSog() && cw ? `$('planning-equipe-select').value='${cw.id}'; showView('planning')` : "showView('dashboard')", 'shield', cw && semEnCours(cw) ? 'Astreinte en cours' : 'Prochaine astreinte', cw ? 'Équipe ' + cw.equipeNum : '–',
-      cw ? `SOG : <b>${cwSogs.length ? cwSogs.map(a => esc(agentName(a))).join(', ') : 'non désigné'}</b> · ${semPeriode(cw)}` : 'aucune semaine programmée', '', 'astr'),
+      cw ? `SOG : <b>${cwSogs.length ? cwSogs.map(a => esc(agentName(a))).join(', ') : 'non désigné'}</b> · ${semPeriode(cw)}` : 'aucune semaine programmée',
+      cw && me.equipeNum && inTeam(me, cw.equipeNum) ? `<span class="tl-dispo rc-dispo" role="button" tabindex="0" onclick="event.stopPropagation(); goDispo('${cw.id}')">${uiIco('dispo')}Mes dispos</span>` : '', 'astr'),
     t("showView('dispo')", 'dispo', 'Mes dispos', crenTot ? Math.round(cren / crenTot * 100) + ' %' : '–', crenTot ? `${cren}/${crenTot} créneaux à venir` : 'aucune astreinte à venir', crenTot ? barHtml(Math.round(cren / crenTot * 100)) : ''),
-    t("showView('dispo')", 'flag', 'Manœuvre & ménage ' + year, `${gs.filter(g => ['oui', 'echange'].includes(g.manoeuvre)).length} / ${an.length}`, `manœuvres · ${nbMen} ménage${nbMen > 1 ? 's' : ''}${nbForm ? ' · ' + nbForm + ' en formateur' : ''}`),
+    t("showView('dispo')", 'flag', 'Manœuvre & entretien ' + year, `${gs.filter(g => ['oui', 'echange'].includes(g.manoeuvre)).length} / ${an.length}`, `manœuvres · ${nbMen} entretien${nbMen > 1 ? 's' : ''}${nbForm ? ' · ' + nbForm + ' en formateur' : ''}`),
     t("showView('formation')", 'formation', 'Formation conduite', fo ? Math.min(100, Math.round(fh / fo * 100)) + ' %' : '–', fo ? `${fmtH(fh)} h / ${fmtH(fo)} h · ${comps.map(c => c.nom || c.code).join(', ')}` : 'non inscrit', fo ? barHtml(Math.min(100, Math.round(fh / fo * 100))) : ''),
     t("showView('competences')", 'competences', 'Compétences', cs ? cs.pct + ' %' : '–', cs ? `${cs.c[2] + cs.c[3]}/${cs.t} acquises · ${cs.c[1]} en cours` : 'arbre non rempli', cs ? barHtml(cs.pct) : ''),
     t("showView('competences')", 'truck', 'Ma conduite', cods.length || '–', cods.length ? 'qualification(s) de conduite' : 'aucune qualification saisie', cods.length ? `<span class="chips">${cods.map(c => `<span>${c}</span>`).join('')}</span>` : ''),
@@ -4881,7 +4883,7 @@ function hiSem(id){ const x = semaineById(id); return x ? x.label : 'semaine ' +
 function histoObjet(k){
   let m; if (!k) return '';
   if ((m = k.match(/^dispo:(\d+):(\d+)$/))) return `Disponibilités de ${hiAg(m[1])} · ${hiSem(m[2])}`;
-  if ((m = k.match(/^garde:(\d+):(\d+)$/))) return `Manœuvre & ménage de ${hiAg(m[1])} · ${hiSem(m[2])}`;
+  if ((m = k.match(/^garde:(\d+):(\d+)$/))) return `Manœuvre & entretien de ${hiAg(m[1])} · ${hiSem(m[2])}`;
   if ((m = k.match(/^gipsi:(\d+)$/))) return 'GIPSI · ' + hiSem(m[1]);
   if ((m = k.match(/^entretien:(\d+)$/))) return 'Entretien & passation · ' + hiSem(m[1]);
   if ((m = k.match(/^cp:(\d+)$/))) return 'Compétences de ' + hiAg(m[1]);
@@ -5013,6 +5015,58 @@ function chargerXlsx(){
   if (window.XLSX) return Promise.resolve();
   return new Promise((ok, ko) => { const sc = document.createElement('script'); sc.src = XLSX_URL; sc.onload = ok; sc.onerror = () => ko(new Error('Bibliothèque Excel indisponible (connexion ?)')); document.head.appendChild(sc); });
 }
+// ---- Récapitulatif formation (secrétariat) ----
+function peutExporterFormation(){ return !!currentUser && (currentUser.isAdmin || isFormateur() || !!currentUser.secretaire); }
+async function exportFormationXlsx(){
+  if (!peutExporterFormation()) return;
+  try { await chargerXlsx(); } catch (e) { return showToast(e.message); }
+  const an = formAnnee || +todayISO().slice(0, 4), comps = data.formation.competences;
+  const tri = (a, b) => agentName(a).localeCompare(agentName(b), 'fr');
+  const agents = activeAgents().slice().sort(tri);
+  const STL = {done: 'Terminé', run: 'En cours', none: 'Non démarré'};
+  const eq = a => [a.equipeNum].concat(a.equipesSup || []).filter(Boolean).join(', ');
+  const r1 = v => Math.round((+v || 0) * 10) / 10;
+  // Feuille 1 : par agent (une ligne par agent, une colonne par formation)
+  const ent1 = ['Nom', 'Prénom', 'Grade', 'Équipe'];
+  comps.forEach(c => ent1.push((c.nom || c.code) + ' – faites (h)', (c.nom || c.code) + ' – objectif (h)', (c.nom || c.code) + ' – %'));
+  ent1.push('Total faites (h)', 'Total objectif (h)', 'Avancement global (%)', 'État');
+  const l1 = [ent1];
+  agents.forEach(a => {
+    const row = [a.nom, a.prenom, a.grade || '', eq(a)]; let tf = 0, to = 0, inscrit = false;
+    comps.forEach(c => { if (!participantRole(c, a.id)) { row.push('', '', ''); return; }
+      inscrit = true; const st = agentStats(c, an, a.id); tf += st.faites; to += st.obj; row.push(r1(st.faites), r1(st.obj), st.pct / 100); });
+    const pg = to ? Math.min(1, tf / to) : 0;
+    row.push(inscrit ? r1(tf) : '', inscrit ? r1(to) : '', inscrit ? pg : '', !inscrit ? 'Non inscrit' : pg >= 1 ? 'Terminé' : tf > 0 ? 'En cours' : 'Non démarré');
+    l1.push(row);
+  });
+  // Feuille 2 : détail (une ligne par agent et par formation)
+  const l2 = [['Nom', 'Prénom', 'Grade', 'Équipe', 'Formation', 'Fonction', 'Objectif (h)', 'Faites (h)', 'Restantes (h)', 'Jour (h)', 'Nuit (h)', 'Séances', 'Dernière séance', 'Avancement (%)', 'Statut']];
+  agents.forEach(a => comps.forEach(c => { const role = participantRole(c, a.id); if (!role) return; const st = agentStats(c, an, a.id);
+    l2.push([a.nom, a.prenom, a.grade || '', eq(a), c.nom || c.code, role, r1(st.obj), r1(st.faites), r1(st.rest), r1(st.jour), r1(st.nuit), st.nb, st.derniere ? new Date(st.derniere + 'T12:00:00') : '', st.pct / 100, STL[st.statut]]); }));
+  // Feuille 3 : séances
+  const l3 = [['Nom', 'Prénom', 'Formation', 'Date', 'Heures', 'Conditions', 'Type', 'Lieu', 'Formateur', 'Commentaire']];
+  const ss = Object.values(data.seances).filter(x => x && +x.annee === +an).map(x => ({x, a: agentById(x.agentId)})).filter(o => o.a)
+    .sort((p, q) => tri(p.a, q.a) || String(p.x.date || '').localeCompare(String(q.x.date || '')));
+  ss.forEach(({x, a}) => { const c = compByCode(x.comp); l3.push([a.nom, a.prenom, c ? (c.nom || c.code) : x.comp, x.date ? new Date(x.date + 'T12:00:00') : '', r1(x.heures), x.conditions || '', x.type || '', x.lieu || '', x.formateurId ? nomA(x.formateurId) : '', x.commentaire || '']); });
+  const feuille = (lignes, pctCols, larg) => { const ws = XLSX.utils.aoa_to_sheet(lignes, {cellDates: true, dateNF: 'dd/mm/yyyy'});
+    for (let r = 1; r < lignes.length; r++) pctCols.forEach(cIdx => { const ref = XLSX.utils.encode_cell({r, c: cIdx}); if (ws[ref] && typeof ws[ref].v === 'number') ws[ref].z = '0%'; });
+    ws['!cols'] = lignes[0].map((h, i) => ({wch: larg ? larg(i, h) : Math.max(10, Math.min(28, String(h).length + 2))}));
+    if (lignes.length > 1) ws['!autofilter'] = {ref: XLSX.utils.encode_range({s: {r: 0, c: 0}, e: {r: lignes.length - 1, c: lignes[0].length - 1}})};
+    return ws; };
+  const pct1 = []; ent1.forEach((h, i) => { if (/%\)?$/.test(h)) pct1.push(i); });
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([['Formation – récapitulatif ' + an], ['CIS Cadillac-Béguey'], ['Édité le', new Date().toLocaleString('fr-FR')], ['Par', agentName(currentUser)], [],
+    ['Agents', agents.length], ['Formations', comps.map(c => c.nom || c.code).join(', ')], ['Séances saisies ' + an, ss.length], [],
+    ['Feuille « Par agent »', 'une ligne par agent (tri par nom) : heures faites, objectif et % pour chaque formation'],
+    ['Feuille « Détail »', 'une ligne par agent et par formation : restantes, jour / nuit, dernière séance, statut'],
+    ['Feuille « Séances »', 'toutes les séances de l’année, par nom puis par date']]), 'Infos');
+  XLSX.utils.book_append_sheet(wb, feuille(l1, pct1), 'Par agent');
+  XLSX.utils.book_append_sheet(wb, feuille(l2, [13]), 'Détail');
+  XLSX.utils.book_append_sheet(wb, feuille(l3, [], (i, h) => i === 9 ? 40 : Math.max(10, String(h).length + 4)), 'Séances');
+  wb.Workbook = {Views: [{activeTab: 1}]};
+  XLSX.writeFile(wb, `Formation_recapitulatif_${an}_${todayISO()}.xlsx`);
+  showToast('Récapitulatif formation ' + an + ' téléchargé');
+}
 function nomA(id){ const a = agentById(+id); return a ? agentName(a) : (id == null || id === '' ? '' : '#' + id); }
 function dateFr(d){ return d ? new Date(String(d).length === 10 ? d + 'T12:00:00' : d).toLocaleDateString('fr-FR') : ''; }
 function heureFr(ms){ return ms ? new Date(ms).toLocaleString('fr-FR') : ''; }
@@ -5034,7 +5088,7 @@ function feuillesExport(){
       menage: 'Ménage', echangeMenageId: 'Remplaçant ménage', entretien: 'Entretien samedi', echangeEntretienId: 'Remplaçant entretien'};
     const VAL = {oui: 'Oui', non: 'Non', echange: 'Échange', present: 'Présent', absent: 'Absent', formateur: 'Formateur', stagiaire: 'Stagiaire', manoeuvrant: 'Manœuvrant'};
     Object.keys(g).forEach(k => { const v = g[k]; r[LBL[k] || k] = /Id$/.test(k) ? nomA(v) : v === true ? 'Oui' : v === false ? 'Non' : v == null ? '' : (VAL[v] || String(v)); }); gar.push(r); }));
-  F['Manœuvre & ménage'] = gar;
+  F['Manœuvre & entretien'] = gar;
   F['GIPSI'] = sem.filter(x => data.gipsi[x.id]).map(x => { const g = data.gipsi[x.id]; return {Semaine: x.label, SOG: (g.sog || []).filter(Boolean).map(nomA).join(', '), Observations: (g.obs || []).filter(Boolean).join(' | ')}; });
   F['Entretien & passation'] = sem.filter(x => data.entretien[x.id]).map(x => { const e = data.entretien[x.id], m = e.menage || {}, zs = zonesMenage();
     return {Semaine: x.label, Consigne: e.consigne || '', TIG: e.tig || '',
