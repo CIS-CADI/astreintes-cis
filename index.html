@@ -1177,7 +1177,8 @@ nav.sticky{box-shadow:0 2px 8px rgba(20,33,61,.06)}
         <div class="card-head"><div><h3>Inventaire – historique et statistiques</h3><p>Qui a fait quel agrès, et quand. Toutes équipes confondues.</p></div>
           <button class="btn btn-light" style="padding:6px 12px" onclick="invHistExcel()">⬇ Excel</button></div>
         <div class="p-5">
-          <div class="ih-tabs mb-4"><button data-t="agent" onclick="invHistTab('agent')">Par agent</button><button data-t="mois" onclick="invHistTab('mois')">Par mois</button><button data-t="stats" onclick="invHistTab('stats')">Statistiques</button></div>
+          <div class="ih-tabs mb-4"><button data-t="agent" onclick="invHistTab('agent')">Par agent</button><button data-t="semaine" onclick="invHistTab('semaine')">Par semaine</button><button data-t="mois" onclick="invHistTab('mois')">Par mois</button><button data-t="stats" onclick="invHistTab('stats')">Statistiques</button></div>
+          <div class="ih-bar"><label class="text-sm text-ink-500">Équipe</label><select class="sel" id="ih-eq" onchange="ihEq = +this.value; ihSem = null; renderInvHist()"></select></div>
           <div id="inv-hist-body"></div>
         </div>
       </div>
@@ -2553,7 +2554,7 @@ function pastille(id, st){
   return `<span class="pastille" style="background:${st.color[id]}" title="${esc(agentName(agentById(id)))} : ${esc(list.join(', '))}">${esc(initials(agentById(id)))} ×${list.length}</span>`;
 }
 // ==================== INVENTAIRE : HISTORIQUE & STATISTIQUES ====================
-let ihTab = 'agent', ihAgent = null, ihMois = null, ihAnnee = null;
+let ihTab = 'agent', ihAgent = null, ihMois = null, ihAnnee = null, ihEq = 0, ihSem = null;
 const MOIS_LONG = ['janvier', 'février', 'mars', 'avril', 'mai', 'juin', 'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
 function ihVeh(id){ const v = data.vehicules.find(x => x.id === +id || x.id === id); return v ? v.nom : 'Agrès #' + id; }
 // Toutes les participations : une ligne par agent, agrès et samedi d'entretien
@@ -2574,7 +2575,10 @@ function invHistTab(t){ ihTab = t; renderInvHist(); }
 function renderInvHist(){
   const box = $('inv-hist-body'); if (!box) return;
   document.querySelectorAll('#inv-hist .ih-tabs button').forEach(b => b.classList.toggle('on', b.dataset.t === ihTab));
-  const L = invHistLignes();
+  const T = invHistLignes(), eqs = [...new Set(T.map(l => l.eq).filter(Boolean))].sort((a, b) => a - b);
+  if (ihEq && !eqs.includes(ihEq)) ihEq = 0;
+  if ($('ih-eq')) $('ih-eq').innerHTML = `<option value="0">Toutes les équipes</option>` + eqs.map(n => `<option value="${n}" ${n === ihEq ? 'selected' : ''}>Équipe ${n}</option>`).join('');
+  const L = ihEq ? T.filter(l => l.eq === ihEq) : T;
   if (!L.length) { box.innerHTML = '<p class="text-sm text-ink-500">Aucun inventaire enregistré pour le moment : affectez des agents aux agrès dans « Inventaire véhicules ».</p>'; return; }
   const agents = [...new Set(L.map(l => l.aid))].map(id => agentById(id)).filter(Boolean).sort((a, b) => agentName(a).localeCompare(agentName(b), 'fr'));
   if (ihTab === 'agent') {
@@ -2589,6 +2593,22 @@ function renderInvHist(){
       <div class="overflow-x-auto"><table class="ftbl"><thead><tr><th>Date</th><th>Semaine</th><th>Équipe</th><th>Agrès fait(s)</th><th>Résultat inventaire</th></tr></thead><tbody>
       ${dates.map(x => `<tr><td class="whitespace-nowrap font-medium">${frDate(x.d)}</td><td>${esc(x.sem.label)}</td><td class="text-center">${x.sem.equipeNum || ''}</td>
         <td>${x.ls.map(l => `<span class="ih-tag">${esc(l.veh)}</span>`).join('')}</td><td>${x.ls.map(l => `<div class="text-xs">${esc(l.veh)} : ${ihEtat(l)}${l.com ? ' — ' + esc(l.com) : ''}</div>`).join('')}</td></tr>`).join('')}
+      </tbody></table></div>`;
+    return;
+  }
+  if (ihTab === 'semaine') {
+    const sems = [...new Map(L.map(l => [l.sem.id, l.sem])).values()].sort((a, b) => b.debut.localeCompare(a.debut));
+    if (!ihSem || !sems.some(x => String(x.id) === String(ihSem))) ihSem = sems[0].id;
+    const sm = sems.find(x => String(x.id) === String(ihSem)), ls = L.filter(l => String(l.sem.id) === String(ihSem));
+    const parVeh = {}; ls.forEach(l => { (parVeh[l.veh] = parVeh[l.veh] || {l, ids: []}).ids.push(l.aid); });
+    const ags = [...new Set(ls.map(l => l.aid))].map(id => agentById(id)).filter(Boolean).sort((a, b) => agentName(a).localeCompare(agentName(b), 'fr'));
+    box.innerHTML = `<div class="ih-bar"><select class="sel" onchange="ihSem = this.value; renderInvHist()">${sems.map(x => `<option value="${x.id}" ${String(x.id) === String(ihSem) ? 'selected' : ''}>${esc(x.label)} · samedi ${frDate(iso(addDays(x.debut, 1)))}</option>`).join('')}</select>
+        <span class="text-sm text-ink-500">Équipe ${sm.equipeNum || '–'} · ${ags.length} agent(s) · ${Object.keys(parVeh).length} agrès</span></div>
+      <div class="overflow-x-auto mb-5"><table class="ftbl"><thead><tr><th>Agrès</th><th>Agents</th><th>Résultat inventaire</th></tr></thead><tbody>
+      ${Object.entries(parVeh).sort((a, b) => a[0].localeCompare(b[0], 'fr')).map(([v, o]) => `<tr><td><span class="ih-tag">${esc(v)}</span></td><td>${o.ids.map(id => esc(agentName(agentById(id)))).join(', ')}</td><td>${ihEtat(o.l)}${o.l.com ? ' <span class="text-xs">— ' + esc(o.l.com) + '</span>' : ''}</td></tr>`).join('')}
+      </tbody></table></div>
+      <p class="font-head uppercase mb-2">Agents de la semaine</p><div class="overflow-x-auto"><table class="ftbl"><thead><tr><th>Agent</th><th>Grade</th><th>Agrès faits</th></tr></thead><tbody>
+      ${ags.map(a => `<tr><td class="font-medium whitespace-nowrap">${esc(agentName(a))}</td><td>${gradeBadge(a.grade)}</td><td>${ls.filter(l => l.aid === a.id).map(l => `<span class="ih-tag">${esc(l.veh)}</span>`).join('')}</td></tr>`).join('')}
       </tbody></table></div>`;
     return;
   }
@@ -2608,8 +2628,8 @@ function renderInvHist(){
       ${Object.values(parSam).sort((a, b) => a.d.localeCompare(b.d)).map(x => Object.entries(x.veh).sort((a, b) => a[0].localeCompare(b[0], 'fr')).map(([v, o], i) => `<tr>${i ? '<td></td><td></td>' : `<td class="whitespace-nowrap font-medium">${frDate(x.d)}</td><td class="text-center">${x.sem.equipeNum || ''}</td>`}
         <td><span class="ih-tag">${esc(v)}</span></td><td>${o.ids.map(id => esc(agentName(agentById(id)))).join(', ')}</td><td>${ihEtat(o.l)}</td></tr>`).join('')).join('')}
       </tbody></table></div>
-      <p class="font-head uppercase mb-2">Agents du mois</p><div class="overflow-x-auto"><table class="ftbl"><thead><tr><th>Agent</th><th>Grade</th><th class="num">Nb</th><th>Agrès faits (date)</th></tr></thead><tbody>
-      ${Object.keys(parAg).map(id => agentById(+id)).filter(Boolean).sort((a, b) => agentName(a).localeCompare(agentName(b), 'fr')).map(a => `<tr><td class="font-medium whitespace-nowrap">${esc(agentName(a))}</td><td>${gradeBadge(a.grade)}</td><td class="num">${parAg[a.id].length}</td>
+      <p class="font-head uppercase mb-2">Agents du mois</p><div class="overflow-x-auto"><table class="ftbl"><thead><tr><th>Agent</th><th>Grade</th><th>Équipe</th><th class="num">Nb</th><th>Agrès faits (date)</th></tr></thead><tbody>
+      ${Object.keys(parAg).map(id => agentById(+id)).filter(Boolean).sort((a, b) => agentName(a).localeCompare(agentName(b), 'fr')).map(a => `<tr><td class="font-medium whitespace-nowrap">${esc(agentName(a))}</td><td>${gradeBadge(a.grade)}</td><td class="text-center">${[...new Set(parAg[a.id].map(l => l.eq))].join(', ')}</td><td class="num">${parAg[a.id].length}</td>
         <td>${parAg[a.id].sort((x, y) => x.date.localeCompare(y.date)).map(l => `<span class="ih-tag">${esc(l.veh)} · ${shortDate(l.date)}</span>`).join('')}</td></tr>`).join('')}
       </tbody></table></div>` : '<p class="text-sm text-ink-500">Aucun inventaire ce mois-ci.</p>'}`;
     return;
@@ -2631,19 +2651,19 @@ function renderInvHist(){
 }
 async function invHistExcel(){
   try { await chargerXlsx(); } catch (e) { return showToast(e.message); }
-  const L = invHistLignes().slice().sort((a, b) => agentName(agentById(a.aid)).localeCompare(agentName(agentById(b.aid)), 'fr') || a.date.localeCompare(b.date));
+  const L = invHistLignes().filter(l => !ihEq || l.eq === ihEq).sort((a, b) => agentName(agentById(a.aid)).localeCompare(agentName(agentById(b.aid)), 'fr') || a.date.localeCompare(b.date));
   const et = l => l.etat === 'ok' ? 'Complet' : l.etat === 'manque' ? 'Manquants' : '';
-  const det = [['Nom', 'Prénom', 'Date', 'Mois', 'Équipe', 'Agrès', 'Résultat inventaire', 'Commentaire']].concat(L.map(l => { const a = agentById(l.aid) || {}; return [a.nom || '#' + l.aid, a.prenom || '', new Date(l.date + 'T12:00:00'), l.date.slice(0, 7), l.eq || '', l.veh, et(l), l.com]; }));
+  const det = [['Nom', 'Prénom', 'Date', 'Mois', 'Semaine', 'Équipe', 'Agrès', 'Résultat inventaire', 'Commentaire']].concat(L.map(l => { const a = agentById(l.aid) || {}; return [a.nom || '#' + l.aid, a.prenom || '', new Date(l.date + 'T12:00:00'), l.date.slice(0, 7), l.sem.label, l.eq || '', l.veh, et(l), l.com]; }));
   const vehs = [...new Set(L.map(l => l.veh))].sort((a, b) => a.localeCompare(b, 'fr')), ids = [...new Set(L.map(l => l.aid))];
   const ags = ids.map(id => agentById(id)).filter(Boolean).sort((a, b) => agentName(a).localeCompare(agentName(b), 'fr'));
   const mx = [['Nom', 'Prénom'].concat(vehs, ['Total'])].concat(ags.map(a => [a.nom, a.prenom].concat(vehs.map(v => L.filter(l => l.aid === a.id && l.veh === v).length || ''), [L.filter(l => l.aid === a.id).length])));
   const wb = XLSX.utils.book_new();
   const ws1 = XLSX.utils.aoa_to_sheet(mx); ws1['!cols'] = mx[0].map((h, i) => ({wch: i < 2 ? 16 : Math.max(8, String(h).length + 2)}));
-  const ws2 = XLSX.utils.aoa_to_sheet(det, {cellDates: true, dateNF: 'dd/mm/yyyy'}); ws2['!cols'] = [16, 14, 12, 9, 8, 16, 18, 30].map(w => ({wch: w}));
-  if (det.length > 1) ws2['!autofilter'] = {ref: XLSX.utils.encode_range({s: {r: 0, c: 0}, e: {r: det.length - 1, c: 7}})};
+  const ws2 = XLSX.utils.aoa_to_sheet(det, {cellDates: true, dateNF: 'dd/mm/yyyy'}); ws2['!cols'] = [16, 14, 12, 9, 26, 8, 16, 18, 30].map(w => ({wch: w}));
+  if (det.length > 1) ws2['!autofilter'] = {ref: XLSX.utils.encode_range({s: {r: 0, c: 0}, e: {r: det.length - 1, c: 8}})};
   XLSX.utils.book_append_sheet(wb, ws1, 'Stats agent x agrès');
   XLSX.utils.book_append_sheet(wb, ws2, 'Historique');
-  XLSX.writeFile(wb, `Inventaire_historique_${todayISO()}.xlsx`);
+  XLSX.writeFile(wb, `Inventaire_historique_${ihEq ? 'equipe' + ihEq + '_' : ''}${todayISO()}.xlsx`);
   showToast('Historique de l’inventaire téléchargé');
 }
 function renderEntretien(){
