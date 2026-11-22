@@ -223,7 +223,7 @@ h1,h2,h3,.font-head{font-family:Oswald,sans-serif;letter-spacing:.3px}
 .tl-main{flex:1;min-width:0;display:flex;flex-direction:column}
 .tl-title{font-weight:600;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .tl-sub{font-size:12px;color:#6b7387}
-.tl-dispo{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;background:var(--rouge);color:#fff;white-space:nowrap;cursor:pointer}.tl-dispo:hover{background:var(--rougeF)}.tl-dispo svg{width:14px;height:14px}.rc .rc-dispo{align-self:flex-start;margin-top:6px}.tl-tags{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.tl-dispo{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:4px 10px;border-radius:999px;background:var(--rouge);color:#fff;white-space:nowrap;cursor:pointer}.tl-dispo:hover{background:var(--rougeF)}.tl-dispo svg{width:14px;height:14px}.rc .rc-dispo{align-self:flex-start;margin-top:6px}.hero-dispo{display:inline-flex;align-items:center;gap:8px;margin-top:14px;padding:10px 16px;border:0;border-radius:12px;background:var(--rouge);color:#fff;font-weight:700;font-size:15px;cursor:pointer;box-shadow:0 6px 16px rgba(0,0,0,.25);transition:transform .12s,background .12s}.hero-dispo:hover{background:var(--rougeF);transform:translateY(-1px)}.hero-dispo .pl{font-size:20px;line-height:1;font-weight:800}.hero-dispo .nb{font-size:12px;font-weight:700;padding:2px 8px;border-radius:999px;background:rgba(255,255,255,.22)}.hero-dispo .nb.ok{background:#1f9d55}.tl-tags{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 .tl-go .i{width:18px;height:18px;color:#a0a7b4}
 .cov-bars{position:relative;display:flex;align-items:flex-end;gap:4px;height:74px;padding-top:4px}
 .cb{flex:1;height:100%;display:flex;align-items:flex-end;background:#f4f6fa;border-radius:6px;overflow:hidden}
@@ -2661,6 +2661,7 @@ function renderDashboard(){
     <div class="hero-r ${now ? 'live' : ''}">
       <p class="hero-when">${now ? '<i class="pulse"></i>' : uiIco('clock')}${when}</p>
       ${next ? `<p class="hero-sem">${esc(next.label)}</p><p class="hero-range">${semPeriode(next)}</p>` : ''}
+      ${next ? (() => { const n = nbFilled(me.id, next.id); return `<button class="hero-dispo" onclick="goDispo('${next.id}')" title="Saisir mes disponibilités pour cette astreinte"><span class="pl">+</span>Mes dispos<span class="nb ${n === 12 ? 'ok' : ''}">${n}/12</span></button>`; })() : ''}
     </div>`;
   // Indicateurs
   const f = next ? nbFilled(me.id, next.id) : 0;
