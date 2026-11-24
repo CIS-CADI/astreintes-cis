@@ -6229,7 +6229,9 @@ const _showView40 = showView;
 showView = function(name){ _showView40(name); if (name === 'icp') renderIcp(); };
 
 // ==================== COMPÉTENCES DANS LE PERSONNEL ====================
-function agCompItems(){ return ((data.arbre || {}).branches || []).flatMap(b => (b.items || []).map(it => Object.assign({br: b.nom}, it))); }
+// les compétences de conduite ont déjà leurs colonnes (COD1, COD2…) : on ne les répète pas ici
+function agCompItems(){ const cods = (typeof codList === 'function' ? codList() : []).map(c => String(c).toUpperCase());
+  return ((data.arbre || {}).branches || []).flatMap(b => (b.items || []).map(it => Object.assign({br: b.nom}, it))).filter(it => !cods.includes(String(it.lien || '').toUpperCase()) && !cods.includes(String(it.nom || '').trim().toUpperCase())); }
 function agCompCell(a){
   const L = agCompItems(); if (!L.length) return '<span class="text-xs text-ink-300">—</span>';
   const peut = isFormateur();
