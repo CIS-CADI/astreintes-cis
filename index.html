@@ -158,7 +158,7 @@ h1,h2,h3,.font-head{font-family:Oswald,sans-serif;letter-spacing:.3px}
 .icp-tabs{display:flex;gap:6px;flex-wrap:wrap}.icp-tabs button{padding:9px 16px;border-radius:999px;border:1px solid var(--bord);background:var(--card,#fff);font-weight:600;font-size:14px;color:var(--ink)}
 .icp-tabs button.on{background:var(--ink);border-color:var(--ink);color:#fff}
 .icp-b{display:inline-block;font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;white-space:nowrap}
-.icp-b.ok{background:#e3f5e9;color:var(--vert)}.icp-b.warn{background:var(--orange-bg);color:#8a5a00}.icp-b.ko{background:#fde4e2;color:#a3221b}.icp-b.info{background:#e8eef9;color:#2c4a86}.icp-b.vide{background:#f0f1f4;color:#7a8194}
+.icp-b.ok{background:#e3f5e9;color:var(--vert)}.icp-b.warn{background:var(--orange-bg);color:#8a5a00}.icp-b.ko{background:#fde4e2;color:#a3221b}.icp-b.info{background:#e8eef9;color:#2c4a86}.icp-b.noir{background:#111;color:#fff}.icp-b.vide{background:#f0f1f4;color:#7a8194}
 .icp-k{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}.icp-k div{border:1px solid var(--bord);border-radius:14px;padding:12px 14px;background:var(--card,#fff)}
 .icp-k b{display:block;font-family:Oswald,sans-serif;font-size:26px;font-weight:500;color:var(--ink);line-height:1.1}.icp-k span{font-size:12px;color:#6b7387}
 .icp-f{display:grid;grid-template-columns:repeat(auto-fill,minmax(170px,1fr));gap:12px}.icp-f label{font-size:12.5px;font-weight:600;color:#4b5263;display:flex;flex-direction:column;gap:4px}
@@ -5973,7 +5973,7 @@ showView = function(name){ _showView39(name); if (name === 'calendriers') render
 
 // ==================== ICP : INDICATEUR DE CONDITION PHYSIQUE ====================
 const ICP_DEF = {cardioMin: 6, cardioNv: 3, rdcpoMax: '06:00', saisisseurs: [], auto: []};
-const ICP_ETATS = {valide: ['Validé', 'ok'], insuf: ['Insuffisant', 'warn'], nv: ['Non validé', 'ko'], blesse: ['Blessé', 'info'], dispense: ['Dispensé', 'info']};
+const ICP_ETATS = {inapte: ['Inapte', 'noir'], valide: ['Validé', 'ok'], insuf: ['Insuffisant', 'warn'], nv: ['Non validé', 'ko'], blesse: ['Blessé', 'info'], dispense: ['Dispensé', 'info']};
 const ICP_STATUTS = [['', 'Test passé'], ['blesse', 'Blessé / inapte temporaire'], ['dispense', 'Dispensé'], ['externe', 'Validé hors CIS (double statut…)']];
 let icpOng = 'moi', icpAnSel = new Date().getFullYear(), icpEqF = '', icpQ = '', icpStatAn = new Date().getFullYear();
 TAB_SHORT.icp = 'ICP'; TAB_SHORT_ORIG.icp = 'ICP'; MENU_BASE.icp = 'agent';
@@ -5985,10 +5985,14 @@ function icpEtatAuto(r){
   if (r.statut === 'externe') return 'valide'; if (r.statut === 'blesse' || r.statut === 'dispense') return r.statut;
   const c = icpCfg(), car = r.cardio == null || r.cardio === '' ? null : +r.cardio, sec = icpSec(r.rdcpo);
   if (car == null && sec == null) return '';
+  if (car != null && car < 1) return 'inapte';   // sous le palier 1 : inaptitude (noir)
   if (car != null && car < c.cardioNv) return 'nv';
   if ((car != null && car < c.cardioMin) || (sec != null && sec > icpSec(c.rdcpoMax)) || car == null || (sec == null && !r.rdcpo)) return 'insuf';
   return 'valide';
 }
+// Luc Léger / VAM-VAL : paliers 1 à 6, par pas de 15 s (stocké en décimal : 2.5 = palier 2 + 30 s)
+const ICP_PALIERS = [0].concat([1, 2, 3, 4, 5].flatMap(p => [p, p + .25, p + .5, p + .75]), [6]);
+function icpCar(v, long){ if (v == null || v === '' || isNaN(+v)) return '–'; v = +v; if (v < 1) return long ? 'Sous le palier 1 (inapte)' : '< P1'; const p = Math.floor(v), sec = Math.round((v - p) * 60); return 'P' + p + (sec ? ` + ${sec} s` : ''); }
 function icpEtat(r){ return r ? (r.etat || icpEtatAuto(r)) : ''; }
 function icpBadge(e, vide){ const x = ICP_ETATS[e]; return x ? `<span class="icp-b ${x[1]}">${x[0]}</span>` : `<span class="icp-b vide">${vide || 'À passer'}</span>`; }
 function icpRec(id, an){ return (data.icpr || {})[id + ':' + an] || null; }
@@ -5996,12 +6000,20 @@ function icpAgents(){ return activeAgents().slice().sort((a, b) => agentName(a).
 function icpEq(a){ return a && a.equipeNum ? eqNom(a.equipeNum) : 'Hors équipe'; }
 function icpEap1(id){ let ok = false; ((data.arbre || {}).branches || []).forEach(b => (b.items || []).forEach(it => { if (/EAP\s*-?\s*1(?!\d)/i.test((it.nom || '') + ' ' + (it.lien || '')) && cpNiv(id, it.id) >= 2) ok = true; })); return ok; }
 function icpSaisisseur(){ const m = vraiMoi(); if (!m) return false; const c = icpCfg(); return !!m.isAdmin || c.saisisseurs.concat(c.auto || []).includes(m.id) || icpEap1(m.id); }
-function icpVoitTout(){ const m = vraiMoi(); return !!m && (icpSaisisseur() || !!m.secretaire); }
+function icpVoitTout(){ return icpSaisisseur(); }   // sans la compétence EAP1 : seulement « Mon ICP »
 function icpAnnees(){ const a = new Set([new Date().getFullYear()]); Object.keys(data.icpr || {}).forEach(k => a.add(+k.split(':')[1])); return [...a].sort((x, y) => y - x); }
 function icpSauver(){ saveData(); }
 // synchronise les détenteurs de la compétence EAP1 (calcul côté appli) pour que le serveur accepte leurs saisies
+function icpAssurerEap1(){
+  if (!data.arbre || !Array.isArray(data.arbre.branches)) return false;
+  if (data.arbre.branches.some(b => (b.items || []).some(it => /EAP\s*-?\s*1(?!\d)/i.test((it.nom || '') + ' ' + (it.lien || ''))))) return false;
+  let b = data.arbre.branches.find(x => /sport|physique|eap/i.test(x.nom));
+  if (!b) { b = {id: cpUid('b'), nom: 'Activités physiques et sportives', items: []}; data.arbre.branches.push(b); }
+  b.items.push({id: cpUid('c'), nom: 'EAP1'}); return true;
+}
 function icpSyncAuto(){
   if (!isAdminU()) return;
+  if (icpAssurerEap1()) icpSauver();
   const auto = activeAgents().filter(a => icpEap1(a.id)).map(a => a.id).sort((x, y) => x - y), c = data.icp || {};
   if (JSON.stringify(auto) !== JSON.stringify((c.auto || []).slice().sort((x, y) => x - y))) { data.icp = Object.assign({}, ICP_DEF, c, {auto}); icpSauver(); }
 }
@@ -6013,7 +6025,7 @@ function renderIcp(){
   if (icpVoitTout()) tabs.push(['saisie', icpSaisisseur() ? 'Saisie des tests' : 'Résultats']);
   if (isAdminU()) tabs.push(['stats', 'Statistiques caserne']);
   if (!tabs.some(t => t[0] === icpOng)) icpOng = 'moi';
-  c.innerHTML = `<div class="card p-4"><div class="ot-head"><span class="ic" style="width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--ink),var(--ink-2));color:#fff">${uiIco('icp')}</span><div><h2 class="font-head text-xl uppercase" style="color:var(--ink)">ICP — Condition physique</h2><p class="text-sm text-ink-500">Un test par an : cardio (palier) et RDCPO (temps).</p></div></div>
+  c.innerHTML = `<div class="card p-4"><div class="ot-head"><span class="ic" style="width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,var(--ink),var(--ink-2));color:#fff">${uiIco('icp')}</span><div><h2 class="font-head text-xl uppercase" style="color:var(--ink)">ICP — Condition physique</h2><p class="text-sm text-ink-500">Un test par an : cardio Luc Léger (paliers 1 à 6) et RDCPO (temps).</p></div></div>
     ${tabs.length > 1 ? `<div class="icp-tabs mt-4">${tabs.map(t => `<button class="${t[0] === icpOng ? 'on' : ''}" onclick="icpOng='${t[0]}';renderIcp()">${t[1]}</button>`).join('')}</div>` : ''}</div><div id="icp-corps" class="space-y-5"></div>`;
   const keep = icpOng === 'saisie' ? keep0 : null;   // une actualisation ne doit pas effacer une saisie en cours
   ({moi: icpMoi, saisie: icpSaisie, stats: icpStats}[icpOng])();
@@ -6029,7 +6041,7 @@ function icpGraph(L){
   const sMin = Math.min(...secs, 9999) - 20, sMax = Math.max(...secs, 0) + 20, cMax = Math.max(...cars, icpCfg().cardioMin) + 1;
   const ys = v => pt + 14 + (sMax - v) / Math.max(1, sMax - sMin) * (H - pt - pb - 30), yc = v => H - pb - v / cMax * (H - pt - pb);
   let g = `<line x1="${pl}" y1="${H - pb}" x2="${W - pr}" y2="${H - pb}" stroke="#d9dde5"/>`;
-  L.forEach((r, i) => { g += `<text x="${x(i)}" y="${H - 12}" text-anchor="middle" font-size="12" fill="#6b7387">${r.an}</text>`; const cv = +r.cardio; if (!isNaN(cv) && r.cardio !== '' && r.cardio != null) g += `<rect x="${x(i) - 13}" y="${yc(cv)}" width="26" height="${H - pb - yc(cv)}" rx="4" fill="var(--ink-2)" opacity=".22"/><text x="${x(i)}" y="${yc(cv) - 4}" text-anchor="middle" font-size="11" fill="var(--ink-2)">P${cv}</text>`; });
+  L.forEach((r, i) => { g += `<text x="${x(i)}" y="${H - 12}" text-anchor="middle" font-size="12" fill="#6b7387">${r.an}</text>`; const cv = +r.cardio; if (!isNaN(cv) && r.cardio !== '' && r.cardio != null) g += `<rect x="${x(i) - 13}" y="${yc(cv)}" width="26" height="${H - pb - yc(cv)}" rx="4" fill="var(--ink-2)" opacity=".22"/><text x="${x(i)}" y="${yc(cv) - 4}" text-anchor="middle" font-size="11" fill="var(--ink-2)">${icpCar(cv)}</text>`; });
   const pts = L.map((r, i) => [x(i), icpSec(r.rdcpo)]).filter(p => p[1] != null);
   if (pts.length) g += `<polyline fill="none" stroke="var(--rouge)" stroke-width="2.5" points="${pts.map(p => p[0] + ',' + ys(p[1])).join(' ')}"/>` + pts.map(p => `<circle cx="${p[0]}" cy="${ys(p[1])}" r="4.5" fill="var(--rouge)"/><text x="${p[0]}" y="${ys(p[1]) - 9}" text-anchor="middle" font-size="12" font-weight="600" fill="var(--rouge)">${icpFmt(p[1])}</text>`).join('');
   return `<div class="card p-5"><h3 class="font-semibold mb-1">Ma progression</h3><p class="text-xs text-ink-500 mb-3"><span style="color:var(--rouge)">●</span> RDCPO (plus haut = plus rapide) · <span style="color:var(--ink-2)">▮</span> palier cardio</p><div class="icp-chart"><svg viewBox="0 0 ${W} ${H}">${g}</svg></div></div>`;
@@ -6039,7 +6051,7 @@ function icpMoi(){
   const L = Object.keys(data.icpr || {}).filter(k => +k.split(':')[0] === a.id).map(k => Object.assign({an: +k.split(':')[1]}, data.icpr[k])).sort((x, y) => x.an - y.an);
   const der = L[L.length - 1], cour = icpRec(a.id, an);
   let h = `<div class="card p-5"><div class="icp-hero"><div><div class="text-sm text-ink-500">Test ${an}</div><div class="mt-1">${cour ? icpBadge(icpEtat(cour)) : icpBadge('', 'À passer cette année')}</div></div>`;
-  if (cour) h += `<div><div class="n">${cour.cardio != null && cour.cardio !== '' ? 'P' + esc(String(cour.cardio)) : '–'}</div><div class="text-xs text-ink-500">palier cardio</div></div><div><div class="n">${esc(icpFmt(icpSec(cour.rdcpo)) || cour.rdcpo || '–')}</div><div class="text-xs text-ink-500">temps RDCPO</div></div>`;
+  if (cour) h += `<div><div class="n">${esc(icpCar(cour.cardio))}</div><div class="text-xs text-ink-500">palier cardio</div></div><div><div class="n">${esc(icpFmt(icpSec(cour.rdcpo)) || cour.rdcpo || '–')}</div><div class="text-xs text-ink-500">temps RDCPO</div></div>`;
   h += `</div>${cour && cour.date ? `<p class="text-sm text-ink-500 mt-3">Passé le ${esc(fmtIcpDate(cour.date))}${cour.ev1 ? ' · évaluateur : ' + esc(cour.ev1) + (cour.ev2 ? ', ' + esc(cour.ev2) : '') : ''}</p>` : ''}</div>`;
   if (!L.length) return $('icp-corps').innerHTML = h + '<div class="card p-6 text-sm text-ink-500">Aucun résultat ICP enregistré pour le moment.</div>';
   h += icpGraph(L);
@@ -6047,7 +6059,7 @@ function icpMoi(){
     + L.slice().reverse().map((r, i, A) => { const p = A[i + 1], s1 = icpSec(r.rdcpo), s0 = p ? icpSec(p.rdcpo) : null, d = s1 != null && s0 != null ? s1 - s0 : null;
       const dc = p && r.cardio !== '' && p.cardio !== '' && r.cardio != null && p.cardio != null ? +r.cardio - +p.cardio : null;
       const ev = [d == null ? '' : `<span style="color:${d <= 0 ? '#146c34' : '#a3221b'}">RDCPO ${d <= 0 ? '−' : '+'}${icpFmt(Math.abs(d))}</span>`, dc ? `<span style="color:${dc > 0 ? '#146c34' : '#a3221b'}">cardio ${dc > 0 ? '+' : ''}${dc}</span>` : ''].filter(Boolean).join(' · ');
-      return `<tr><td class="font-semibold">${r.an}</td><td>${esc(fmtIcpDate(r.date))}</td><td class="num">${r.cardio != null && r.cardio !== '' ? 'P' + esc(String(r.cardio)) : '–'}</td><td class="num">${esc(icpFmt(icpSec(r.rdcpo)) || r.rdcpo || '–')}</td><td class="text-sm">${ev || '<span class="text-ink-300">—</span>'}</td><td>${icpBadge(icpEtat(r), r.statut === 'externe' ? 'Validé' : '')}</td></tr>`; }).join('') + '</tbody></table></div></div>';
+      return `<tr><td class="font-semibold">${r.an}</td><td>${esc(fmtIcpDate(r.date))}</td><td class="num">${esc(icpCar(r.cardio))}</td><td class="num">${esc(icpFmt(icpSec(r.rdcpo)) || r.rdcpo || '–')}</td><td class="text-sm">${ev || '<span class="text-ink-300">—</span>'}</td><td>${icpBadge(icpEtat(r), r.statut === 'externe' ? 'Validé' : '')}</td></tr>`; }).join('') + '</tbody></table></div></div>';
   $('icp-corps').innerHTML = h;
 }
 function fmtIcpDate(d){ if (!d) return ''; const m = String(d).match(/^(\d{4})-(\d\d)-(\d\d)$/); return m ? `${m[3]}/${m[2]}/${m[1]}` : String(d); }
@@ -6056,13 +6068,13 @@ function icpSaisie(){
   const peut = icpSaisisseur(), ans = icpAnnees(), moi = vraiMoi();
   const evOpts = sel => '<option value="">—</option>' + icpAgents().map(a => { const n = a.nom + ' ' + (a.prenom || '').charAt(0); return `<option ${sel === n ? 'selected' : ''}>${esc(n)}</option>`; }).join('');
   let h = '';
-  if (peut) h += `<div class="card p-5 space-y-4"><div class="flex flex-wrap gap-3 items-end justify-between"><div><h3 class="font-semibold text-lg">Saisir un résultat</h3><p class="text-sm text-ink-500">Choisissez l’agent : l’équipe et le résultat existant se remplissent tout seuls.</p></div>
+  if (peut) h += `<div class="card p-5 space-y-4"><div class="flex flex-wrap gap-3 items-end justify-between"><div><h3 class="font-semibold text-lg">Saisir un résultat</h3><p class="text-sm text-ink-500">Réservé aux agents ayant la compétence EAP1. Choisissez l’agent : l’équipe et le résultat existant se remplissent tout seuls.</p></div>
       <label class="text-sm font-semibold">Année <select class="sel" onchange="icpAnSel=+this.value;renderIcp()">${ans.concat(ans.includes(icpAnSel) ? [] : [icpAnSel]).map(y => `<option ${y === icpAnSel ? 'selected' : ''}>${y}</option>`).join('')}</select></label></div>
     <div class="icp-f"><label class="l2">Agent<select id="icp-ag" class="sel icp-big" onchange="icpCharger()"><option value="">— Choisir un agent —</option>${(() => { const G = {}; icpAgents().forEach(a => (G[icpEq(a)] = G[icpEq(a)] || []).push(a));
         return Object.keys(G).sort((x, y) => x.localeCompare(y, 'fr', {numeric: true})).map(g => `<optgroup label="${esc(g)}">${G[g].map(a => `<option value="${a.id}">${esc(agentName(a))}${icpRec(a.id, icpAnSel) ? ' ✓' : ''}</option>`).join('')}</optgroup>`).join(''); })()}</select></label>
       <label>Équipe<input id="icp-eq" class="sel" disabled></label>
       <label>Date du test<input id="icp-date" type="date" class="sel" value="${todayISO()}"></label>
-      <label>Cardio (palier)<input id="icp-car" type="number" min="0" max="25" step="0.5" inputmode="decimal" class="sel icp-big" oninput="icpApercu()"></label>
+      <label>Cardio — Luc Léger (VAM / VAL)<select id="icp-car" class="sel icp-big" onchange="icpApercu()"><option value="">—</option>${ICP_PALIERS.slice().reverse().map(v => `<option value="${v}">${icpCar(v, true)}</option>`).join('')}</select></label>
       <label>RDCPO (temps mm:ss)<input id="icp-rd" class="sel icp-big" placeholder="ex. 4:35" inputmode="numeric" oninput="icpApercu()"></label>
       <label>Situation<select id="icp-st" class="sel" onchange="icpApercu()">${ICP_STATUTS.map(([v, l]) => `<option value="${v}">${l}</option>`).join('')}</select></label>
       <label>Évaluateur 1<select id="icp-ev1" class="sel">${evOpts(moi ? moi.nom + ' ' + (moi.prenom || '').charAt(0) : '')}</select></label>
@@ -6085,7 +6097,7 @@ function icpListe(){
   if (icpEqF) L = L.filter(x => icpEq(x.a) === icpEqF); if (q) L = L.filter(x => agentName(x.a).toLowerCase().includes(q));
   L.sort((x, y) => icpEq(x.a).localeCompare(icpEq(y.a), 'fr', {numeric: true}) || agentName(x.a).localeCompare(agentName(y.a), 'fr'));
   $('icp-cpt').textContent = `${L.filter(x => x.r).length} saisi(s) sur ${L.length}`;
-  $('icp-tb').innerHTML = L.map(({a, r}) => `<tr class="${r ? '' : 'vide'} ${peut ? 'clic' : ''}" ${peut ? `onclick="icpEditer(${a.id})"` : ''}><td class="whitespace-nowrap">${esc(icpEq(a))}</td><td class="font-medium whitespace-nowrap">${esc(agentName(a))}</td><td>${r ? esc(fmtIcpDate(r.date)) : ''}</td><td class="num">${r && r.cardio != null && r.cardio !== '' ? 'P' + esc(String(r.cardio)) : ''}</td><td class="num">${r ? esc(icpFmt(icpSec(r.rdcpo)) || r.rdcpo || '') : ''}</td>
+  $('icp-tb').innerHTML = L.map(({a, r}) => `<tr class="${r ? '' : 'vide'} ${peut ? 'clic' : ''}" ${peut ? `onclick="icpEditer(${a.id})"` : ''}><td class="whitespace-nowrap">${esc(icpEq(a))}</td><td class="font-medium whitespace-nowrap">${esc(agentName(a))}</td><td>${r ? esc(fmtIcpDate(r.date)) : ''}</td><td class="num">${r && r.cardio != null && r.cardio !== '' ? esc(icpCar(r.cardio)) : ''}</td><td class="num">${r ? esc(icpFmt(icpSec(r.rdcpo)) || r.rdcpo || '') : ''}</td>
     <td class="text-sm">${r ? esc([r.ev1, r.ev2].filter(Boolean).join(', ')) : ''}</td><td>${r ? icpBadge(icpEtat(r)) : icpBadge('')}</td><td class="text-center">${r ? (r.geef ? '✓' : '<span class="text-ink-300">—</span>') : ''}</td></tr>`).join('') || '<tr><td colspan="8" class="text-ink-500">Aucun agent.</td></tr>';
 }
 function icpEditer(id){ const s = $('icp-ag'); if (!s) return; s.value = String(id); icpCharger(); window.scrollTo({top: 0, behavior: 'smooth'}); }
@@ -6095,11 +6107,12 @@ function icpCharger(){
   const id = +$('icp-ag').value, a = agentById(id), r = id ? icpRec(id, icpAnSel) : null;
   $('icp-eq').value = a ? icpEq(a) : '';
   const set = (k, v) => { const e = $(k); if (e.type === 'checkbox') e.checked = !!v; else e.value = v == null ? '' : v; };
-  set('icp-date', r && /^\d{4}-/.test(r.date || '') ? r.date : todayISO()); set('icp-car', r ? r.cardio : ''); set('icp-rd', r ? r.rdcpo : ''); set('icp-st', r ? r.statut || '' : ''); set('icp-et', r ? r.etat || '' : '');
+  set('icp-date', r && /^\d{4}-/.test(r.date || '') ? r.date : todayISO()); if (r && r.cardio != null && r.cardio !== '' && !ICP_PALIERS.includes(+r.cardio)) $('icp-car').insertAdjacentHTML('beforeend', `<option value="${+r.cardio}">${icpCar(r.cardio, true)}</option>`);
+  set('icp-car', r && r.cardio != null && r.cardio !== '' ? String(+r.cardio) : ''); set('icp-rd', r ? r.rdcpo : ''); set('icp-st', r ? r.statut || '' : ''); set('icp-et', r ? r.etat || '' : '');
   if (r) { set('icp-ev1', r.ev1 || ''); set('icp-ev2', r.ev2 || ''); } set('icp-geef', r && r.geef); set('icp-rq', r ? r.rq : '');
   $('icp-sup').classList.toggle('hidden', !r);
   const p = id ? icpRec(id, icpAnSel - 1) : null;
-  $('icp-prec').innerHTML = p ? `${icpAnSel - 1} : P${esc(String(p.cardio ?? '–'))} · ${esc(icpFmt(icpSec(p.rdcpo)) || p.rdcpo || '–')} · ${icpBadge(icpEtat(p))}` : '';
+  $('icp-prec').innerHTML = p ? `${icpAnSel - 1} : ${esc(icpCar(p.cardio))} · ${esc(icpFmt(icpSec(p.rdcpo)) || p.rdcpo || '–')} · ${icpBadge(icpEtat(p))}` : '';
   icpApercu(); if (id) $('icp-car').focus();
 }
 function icpEnregistrer(){
@@ -6153,7 +6166,7 @@ function icpStatsAn(an){
   const ag = icpAgents(), R = ag.map(a => ({a, r: icpRec(a.id, an)})), e = x => icpEtat(x.r);
   const n = k => R.filter(x => e(x) === k).length, secs = R.map(x => x.r && x.r.statut !== 'externe' ? icpSec(x.r.rdcpo) : null).filter(v => v != null);
   const cars = R.map(x => x.r && x.r.cardio != null && x.r.cardio !== '' ? +x.r.cardio : null).filter(v => v != null);
-  return {R, eff: ag.length, saisis: R.filter(x => x.r).length, valide: n('valide'), insuf: n('insuf'), nv: n('nv'), blesse: n('blesse'), dispense: n('dispense'), afaire: R.filter(x => !x.r).length,
+  return {R, eff: ag.length, saisis: R.filter(x => x.r).length, valide: n('valide'), insuf: n('insuf'), nv: n('nv'), inapte: n('inapte'), blesse: n('blesse'), dispense: n('dispense'), afaire: R.filter(x => !x.r).length,
     moy: secs.length ? secs.reduce((s, v) => s + v, 0) / secs.length : null, best: secs.length ? Math.min(...secs) : null, carMoy: cars.length ? cars.reduce((s, v) => s + v, 0) / cars.length : null,
     geefManque: R.filter(x => x.r && !x.r.geef && x.r.statut !== 'externe').length, cars};
 }
@@ -6166,29 +6179,29 @@ function icpStats(){
   let h = `<div class="card p-5 space-y-4"><div class="flex flex-wrap gap-3 items-center justify-between"><h3 class="font-semibold text-lg">Statistiques de la caserne</h3><div class="flex gap-2 flex-wrap">
       <select class="sel" onchange="icpStatAn=+this.value;icpStats()">${ans.map(y => `<option ${y === icpStatAn ? 'selected' : ''}>${y}</option>`).join('')}</select>
       <label class="btn btn-light" style="cursor:pointer">⬆ Importer un Excel<input type="file" accept=".xlsx,.xls,.csv" class="hidden" onchange="icpImporterFichier(this)"></label><button class="btn btn-red" onclick="icpExporter()">⬇ Export Excel</button></div></div>
-    <div class="icp-k">${k(S.eff, 'agents actifs') + k(S.saisis + ' / ' + S.eff, 'tests saisis') + k(icpPct(S.valide, S.eff) + ' %', 'validés (sur l’effectif)') + k(S.valide, 'validés') + k(S.insuf, 'insuffisants') + k(S.nv, 'non validés')
-      + k(S.blesse + S.dispense, 'blessés / dispensés') + k(S.afaire, 'à passer') + k(S.moy != null ? icpFmt(S.moy) : '–', 'RDCPO moyen') + k(S.best != null ? icpFmt(S.best) : '–', 'meilleur RDCPO') + k(S.carMoy != null ? 'P' + (Math.round(S.carMoy * 10) / 10).toString().replace('.', ',') : '–', 'palier cardio moyen') + k(S.geefManque, 'à saisir dans GEEF')}</div>
-    <div><div class="icp-bar">${[['valide', '#2e9e5b'], ['insuf', '#e3a21a'], ['nv', '#d2352b'], ['blesse', '#6f8fd0'], ['dispense', '#9fb4de']].map(([e, col]) => `<i style="width:${icpPct(S[e], S.eff)}%;background:${col}" title="${ICP_ETATS[e][0]}"></i>`).join('')}</div>
-      <p class="text-xs text-ink-500 mt-2">Vert : validés · orange : insuffisants · rouge : non validés · bleu : blessés / dispensés · gris : à passer</p></div></div>`;
+    <div class="icp-k">${k(S.eff, 'agents actifs') + k(S.saisis + ' / ' + S.eff, 'tests saisis') + k(icpPct(S.valide, S.eff) + ' %', 'validés (sur l’effectif)') + k(S.valide, 'validés') + k(S.insuf, 'insuffisants') + k(S.nv, 'non validés') + k(S.inapte, 'inaptes (sous P1)')
+      + k(S.blesse + S.dispense, 'blessés / dispensés') + k(S.afaire, 'à passer') + k(S.moy != null ? icpFmt(S.moy) : '–', 'RDCPO moyen') + k(S.best != null ? icpFmt(S.best) : '–', 'meilleur RDCPO') + k(S.carMoy != null ? icpCar(Math.round(S.carMoy * 4) / 4) : '–', 'palier cardio moyen') + k(S.geefManque, 'à saisir dans GEEF')}</div>
+    <div><div class="icp-bar">${[['valide', '#2e9e5b'], ['insuf', '#e3a21a'], ['nv', '#d2352b'], ['inapte', '#111'], ['blesse', '#6f8fd0'], ['dispense', '#9fb4de']].map(([e, col]) => `<i style="width:${icpPct(S[e], S.eff)}%;background:${col}" title="${ICP_ETATS[e][0]}"></i>`).join('')}</div>
+      <p class="text-xs text-ink-500 mt-2">Vert : validés · orange : insuffisants · rouge : non validés · noir : inaptes · bleu : blessés / dispensés · gris : à passer</p></div></div>`;
   // par équipe
   const G = {}; S.R.forEach(x => (G[icpEq(x.a)] = G[icpEq(x.a)] || []).push(x));
-  h += `<div class="card overflow-hidden"><div class="card-head"><h3>Par équipe — ${icpStatAn}</h3></div><div class="overflow-x-auto"><table class="ftbl icp-t"><thead><tr><th>Équipe</th><th class="num">Effectif</th><th class="num">Saisis</th><th class="num">Validés</th><th class="num">Insuff.</th><th class="num">Non val.</th><th class="num">Blessés / disp.</th><th class="num">À passer</th><th class="num">% validés</th><th class="num">RDCPO moyen</th></tr></thead><tbody>`
+  h += `<div class="card overflow-hidden"><div class="card-head"><h3>Par équipe — ${icpStatAn}</h3></div><div class="overflow-x-auto"><table class="ftbl icp-t"><thead><tr><th>Équipe</th><th class="num">Effectif</th><th class="num">Saisis</th><th class="num">Validés</th><th class="num">Insuff.</th><th class="num">Non val.</th><th class="num">Inaptes</th><th class="num">Blessés / disp.</th><th class="num">À passer</th><th class="num">% validés</th><th class="num">RDCPO moyen</th></tr></thead><tbody>`
     + Object.keys(G).sort((x, y) => x.localeCompare(y, 'fr', {numeric: true})).map(g => { const A = G[g], e = x => icpEtat(x.r), sc = A.map(x => x.r && x.r.statut !== 'externe' ? icpSec(x.r.rdcpo) : null).filter(v => v != null);
-      return `<tr><td class="font-semibold">${esc(g)}</td><td class="num">${A.length}</td><td class="num">${A.filter(x => x.r).length}</td><td class="num">${A.filter(x => e(x) === 'valide').length}</td><td class="num">${A.filter(x => e(x) === 'insuf').length}</td><td class="num">${A.filter(x => e(x) === 'nv').length}</td><td class="num">${A.filter(x => ['blesse', 'dispense'].includes(e(x))).length}</td><td class="num">${A.filter(x => !x.r).length}</td><td class="num font-semibold">${icpPct(A.filter(x => e(x) === 'valide').length, A.length)} %</td><td class="num">${sc.length ? icpFmt(sc.reduce((s, v) => s + v, 0) / sc.length) : '–'}</td></tr>`; }).join('') + '</tbody></table></div></div>';
+      return `<tr><td class="font-semibold">${esc(g)}</td><td class="num">${A.length}</td><td class="num">${A.filter(x => x.r).length}</td><td class="num">${A.filter(x => e(x) === 'valide').length}</td><td class="num">${A.filter(x => e(x) === 'insuf').length}</td><td class="num">${A.filter(x => e(x) === 'nv').length}</td><td class="num">${A.filter(x => e(x) === 'inapte').length}</td><td class="num">${A.filter(x => ['blesse', 'dispense'].includes(e(x))).length}</td><td class="num">${A.filter(x => !x.r).length}</td><td class="num font-semibold">${icpPct(A.filter(x => e(x) === 'valide').length, A.length)} %</td><td class="num">${sc.length ? icpFmt(sc.reduce((s, v) => s + v, 0) / sc.length) : '–'}</td></tr>`; }).join('') + '</tbody></table></div></div>';
   // répartition des paliers + évolution
   const pal = {}; S.cars.forEach(v => pal[v] = (pal[v] || 0) + 1); const pm = Math.max(1, ...Object.values(pal));
-  h += `<div class="grid md:grid-cols-2 gap-5"><div class="card p-5"><h3 class="font-semibold mb-3">Paliers cardio atteints</h3>${Object.keys(pal).sort((a, b) => a - b).map(p => `<div class="flex items-center gap-2 mb-1.5 text-sm"><span style="width:44px">P${p}</span><span class="flex-1 icp-bar" style="height:14px"><i style="width:${pal[p] / pm * 100}%;background:${+p >= c.cardioMin ? '#2e9e5b' : +p < c.cardioNv ? '#d2352b' : '#e3a21a'}"></i></span><b style="width:28px;text-align:right">${pal[p]}</b></div>`).join('') || '<p class="text-sm text-ink-500">Aucune donnée.</p>'}</div>
+  h += `<div class="grid md:grid-cols-2 gap-5"><div class="card p-5"><h3 class="font-semibold mb-3">Paliers cardio atteints</h3>${Object.keys(pal).sort((a, b) => a - b).map(p => `<div class="flex items-center gap-2 mb-1.5 text-sm"><span style="width:76px;white-space:nowrap">${icpCar(p)}</span><span class="flex-1 icp-bar" style="height:14px"><i style="width:${pal[p] / pm * 100}%;background:${+p >= c.cardioMin ? '#2e9e5b' : +p < 1 ? '#111' : +p < c.cardioNv ? '#d2352b' : '#e3a21a'}"></i></span><b style="width:28px;text-align:right">${pal[p]}</b></div>`).join('') || '<p class="text-sm text-ink-500">Aucune donnée.</p>'}</div>
     <div class="card p-5"><h3 class="font-semibold mb-3">Évolution par année</h3><table class="ftbl icp-t"><thead><tr><th>Année</th><th class="num">Saisis</th><th class="num">% validés</th><th class="num">RDCPO moyen</th><th class="num">Palier moyen</th></tr></thead><tbody>${ans.slice().sort().map(y => { const T = icpStatsAn(y); return `<tr><td class="font-semibold">${y}</td><td class="num">${T.saisis}</td><td class="num">${icpPct(T.valide, T.eff)} %</td><td class="num">${T.moy != null ? icpFmt(T.moy) : '–'}</td><td class="num">${T.carMoy != null ? (Math.round(T.carMoy * 10) / 10).toString().replace('.', ',') : '–'}</td></tr>`; }).join('')}</tbody></table></div></div>`;
   // listes
   const liste = (titre, A, vide) => `<div class="card p-5"><h3 class="font-semibold mb-2">${titre} <span class="text-ink-500 font-normal">(${A.length})</span></h3>${A.length ? `<div class="text-sm leading-7">${A.map(x => `<span class="whitespace-nowrap">${esc(agentName(x.a))} <span class="text-ink-500">· ${esc(icpEq(x.a))}</span></span>`).join(' &nbsp;·&nbsp; ')}</div>` : `<p class="text-sm text-ink-500">${vide}</p>`}</div>`;
-  h += `<div class="grid md:grid-cols-2 gap-5">${liste('À passer', S.R.filter(x => !x.r), 'Tout le monde a passé le test.')}${liste('Insuffisants et non validés', S.R.filter(x => ['insuf', 'nv'].includes(icpEtat(x.r))), 'Aucun.')}${liste('Blessés / dispensés', S.R.filter(x => ['blesse', 'dispense'].includes(icpEtat(x.r))), 'Aucun.')}${liste('Pas encore saisis dans GEEF', S.R.filter(x => x.r && !x.r.geef && x.r.statut !== 'externe'), 'Tout est saisi.')}</div>`;
+  h += `<div class="grid md:grid-cols-2 gap-5">${liste('À passer', S.R.filter(x => !x.r), 'Tout le monde a passé le test.')}${liste('Insuffisants, non validés et inaptes', S.R.filter(x => ['insuf', 'nv', 'inapte'].includes(icpEtat(x.r))), 'Aucun.')}${liste('Blessés / dispensés', S.R.filter(x => ['blesse', 'dispense'].includes(icpEtat(x.r))), 'Aucun.')}${liste('Pas encore saisis dans GEEF', S.R.filter(x => x.r && !x.r.geef && x.r.statut !== 'externe'), 'Tout est saisi.')}</div>`;
   // réglages
   const sais = c.saisisseurs.map(id => agentById(id)).filter(Boolean), auto = activeAgents().filter(a => icpEap1(a.id));
   h += `<div class="card p-5 space-y-4"><h3 class="font-semibold text-lg">Réglages ICP</h3>
-    <div class="icp-f"><label>Palier cardio minimum (validé)<input type="number" step="0.5" class="sel" value="${c.cardioMin}" onchange="icpReg('cardioMin', +this.value)"></label>
-      <label>En dessous de ce palier : non validé<input type="number" step="0.5" class="sel" value="${c.cardioNv}" onchange="icpReg('cardioNv', +this.value)"></label>
+    <div class="icp-f"><label>Palier cardio minimum (validé)<select class="sel" onchange="icpReg('cardioMin', +this.value)">${ICP_PALIERS.filter(v => v >= 1).map(v => `<option value="${v}" ${v === +c.cardioMin ? 'selected' : ''}>${icpCar(v)}</option>`).join('')}</select></label>
+      <label>En dessous de ce palier : non validé<select class="sel" onchange="icpReg('cardioNv', +this.value)">${ICP_PALIERS.filter(v => v >= 1).map(v => `<option value="${v}" ${v === +c.cardioNv ? 'selected' : ''}>${icpCar(v)}</option>`).join('')}</select></label>
       <label>Temps RDCPO maximum (mm:ss)<input class="sel" value="${esc(c.rdcpoMax)}" onchange="icpReg('rdcpoMax', this.value)"></label></div>
-    <p class="text-sm text-ink-500">État automatique : <b>validé</b> si palier ≥ ${c.cardioMin} et RDCPO ≤ ${esc(c.rdcpoMax)} ; <b>non validé</b> si palier &lt; ${c.cardioNv} ; sinon <b>insuffisant</b>. Le saisisseur peut forcer l’état.</p>
+    <p class="text-sm text-ink-500">Cardio Luc Léger (VAM / VAL) : paliers 1 à 6 par pas de 15 s. État automatique : <b>validé</b> si palier ≥ ${icpCar(c.cardioMin)} et RDCPO ≤ ${esc(c.rdcpoMax)} ; <b>inapte</b> (noir) sous le palier 1 ; <b>non validé</b> sous ${icpCar(c.cardioNv)} ; sinon <b>insuffisant</b>. Le saisisseur peut forcer l’état.</p>
     <div><b class="text-sm">Saisisseurs</b><p class="text-sm text-ink-500 mb-2">Automatiquement : les agents ayant la compétence <b>EAP1</b> acquise (${auto.length ? auto.map(a => esc(agentName(a))).join(', ') : 'aucun pour l’instant — ajoutez « EAP1 » dans Compétences'}). Vous pouvez en ajouter d’autres :</p>
       <div class="flex flex-wrap gap-2 mb-2">${sais.map(a => `<span class="icp-b info">${esc(agentName(a))} <button onclick="icpSais(${a.id}, false)" title="Retirer">✕</button></span>`).join('')}</div>
       <select class="sel" onchange="if(this.value)icpSais(+this.value, true)"><option value="">+ Ajouter un saisisseur</option>${icpAgents().filter(a => !c.saisisseurs.includes(a.id)).map(a => `<option value="${a.id}">${esc(agentName(a))}</option>`).join('')}</select></div></div>`;
@@ -6200,9 +6213,9 @@ async function icpExporter(){
   try { await chargerXlsx(); } catch (e) { return showToast(e.message); }
   const an = icpStatAn, S = icpStatsAn(an), wb = XLSX.utils.book_new(), ajoute = (t, n, cols) => { const w = XLSX.utils.aoa_to_sheet(t); w['!cols'] = cols.map(x => ({wch: x})); XLSX.utils.book_append_sheet(wb, w, n); };
   const lib = e => (ICP_ETATS[e] || ['À passer'])[0];
-  ajoute([['ICP ' + an + ' — CIS Cadillac-Béguey'], ['Édité le ' + new Date().toLocaleString('fr-FR')], [], ['ÉQUIPE', 'NOM', 'DATE', 'CARDIO (palier)', 'RDCPO', 'ÉVALUATEUR 1', 'ÉVALUATEUR 2', 'SITUATION', 'ÉTAT', 'SAISIE GEEF', 'REMARQUE']]
-    .concat(S.R.slice().sort((x, y) => icpEq(x.a).localeCompare(icpEq(y.a), 'fr', {numeric: true}) || agentName(x.a).localeCompare(agentName(y.a), 'fr')).map(({a, r}) => [icpEq(a), agentName(a), r ? fmtIcpDate(r.date) : '', r && r.cardio != null ? r.cardio : '', r ? r.rdcpo || '' : '', r ? r.ev1 || '' : '', r ? r.ev2 || '' : '', r ? (ICP_STATUTS.find(s => s[0] === (r.statut || '')) || ['', ''])[1] : '', lib(icpEtat(r)), r ? (r.geef ? 'OUI' : 'NON') : '', r ? r.rq || '' : ''])), 'Résultats ' + an, [14, 30, 11, 14, 9, 16, 16, 26, 13, 11, 30]);
-  ajoute([['Indicateur', 'Valeur'], ['Agents actifs', S.eff], ['Tests saisis', S.saisis], ['Validés', S.valide], ['% validés (sur l’effectif)', icpPct(S.valide, S.eff)], ['Insuffisants', S.insuf], ['Non validés', S.nv], ['Blessés', S.blesse], ['Dispensés', S.dispense], ['À passer', S.afaire], ['RDCPO moyen', S.moy != null ? icpFmt(S.moy) : ''], ['Meilleur RDCPO', S.best != null ? icpFmt(S.best) : ''], ['Palier cardio moyen', S.carMoy != null ? Math.round(S.carMoy * 10) / 10 : ''], ['À saisir dans GEEF', S.geefManque]], 'Synthèse', [30, 12]);
+  ajoute([['ICP ' + an + ' — CIS Cadillac-Béguey'], ['Édité le ' + new Date().toLocaleString('fr-FR')], [], ['ÉQUIPE', 'NOM', 'DATE', 'CARDIO (palier Luc Léger)', 'RDCPO', 'ÉVALUATEUR 1', 'ÉVALUATEUR 2', 'SITUATION', 'ÉTAT', 'SAISIE GEEF', 'REMARQUE']]
+    .concat(S.R.slice().sort((x, y) => icpEq(x.a).localeCompare(icpEq(y.a), 'fr', {numeric: true}) || agentName(x.a).localeCompare(agentName(y.a), 'fr')).map(({a, r}) => [icpEq(a), agentName(a), r ? fmtIcpDate(r.date) : '', r && r.cardio != null && r.cardio !== '' ? icpCar(r.cardio) : '', r ? r.rdcpo || '' : '', r ? r.ev1 || '' : '', r ? r.ev2 || '' : '', r ? (ICP_STATUTS.find(s => s[0] === (r.statut || '')) || ['', ''])[1] : '', lib(icpEtat(r)), r ? (r.geef ? 'OUI' : 'NON') : '', r ? r.rq || '' : ''])), 'Résultats ' + an, [14, 30, 11, 14, 9, 16, 16, 26, 13, 11, 30]);
+  ajoute([['Indicateur', 'Valeur'], ['Agents actifs', S.eff], ['Tests saisis', S.saisis], ['Validés', S.valide], ['% validés (sur l’effectif)', icpPct(S.valide, S.eff)], ['Insuffisants', S.insuf], ['Non validés', S.nv], ['Inaptes (sous P1)', S.inapte], ['Blessés', S.blesse], ['Dispensés', S.dispense], ['À passer', S.afaire], ['RDCPO moyen', S.moy != null ? icpFmt(S.moy) : ''], ['Meilleur RDCPO', S.best != null ? icpFmt(S.best) : ''], ['Palier cardio moyen', S.carMoy != null ? Math.round(S.carMoy * 10) / 10 : ''], ['À saisir dans GEEF', S.geefManque]], 'Synthèse', [30, 12]);
   const G = {}; S.R.forEach(x => (G[icpEq(x.a)] = G[icpEq(x.a)] || []).push(x));
   ajoute([['Équipe', 'Effectif', 'Saisis', 'Validés', 'Insuffisants', 'Non validés', 'Blessés / dispensés', 'À passer', '% validés']].concat(Object.keys(G).sort((x, y) => x.localeCompare(y, 'fr', {numeric: true})).map(g => { const A = G[g], e = x => icpEtat(x.r); return [g, A.length, A.filter(x => x.r).length, A.filter(x => e(x) === 'valide').length, A.filter(x => e(x) === 'insuf').length, A.filter(x => e(x) === 'nv').length, A.filter(x => ['blesse', 'dispense'].includes(e(x))).length, A.filter(x => !x.r).length, icpPct(A.filter(x => e(x) === 'valide').length, A.length)]; })), 'Par équipe', [16, 9, 9, 9, 12, 12, 18, 10, 10]);
   ajoute([['Année', 'Saisis', 'Validés', '% validés', 'RDCPO moyen', 'Palier moyen']].concat(icpAnnees().slice().sort().map(y => { const T = icpStatsAn(y); return [y, T.saisis, T.valide, icpPct(T.valide, T.eff), T.moy != null ? icpFmt(T.moy) : '', T.carMoy != null ? Math.round(T.carMoy * 10) / 10 : '']; })), 'Évolution', [8, 9, 9, 10, 13, 12]);
