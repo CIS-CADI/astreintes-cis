@@ -1222,7 +1222,7 @@ nav.sticky{box-shadow:0 2px 8px rgba(20,33,61,.06)}
         </div>
         <p class="px-5 py-3 text-xs text-ink-500">Vos interventions sont enregistrées sur cet appareil. Pensez à « Export JSON » (menu Affichage du carnet) pour garder une sauvegarde ou les retrouver sur un autre appareil.</p>
       </div>
-      <div class="card overflow-hidden"><iframe id="inters-frame" title="Mes interventions" style="display:block;width:100%;height:calc(100dvh - 150px);min-height:560px;border:0;background:#e7eaed"></iframe></div>
+      <iframe id="inters-frame" title="Mes interventions" scrolling="no" style="display:block;width:100%;height:600px;border:0;background:transparent;overflow:hidden"></iframe>
     </section>
     <!-- ===== SUIVI CASERNE (secrétariat, lecture seule) ===== -->
     <section id="view-secr" class="view hidden space-y-5">
@@ -3954,12 +3954,32 @@ function renderInters(){
   if ($('ic-nb')) $('ic-nb').textContent = '(' + outilAcces('inters').length + ')';
   const cfg = icCfg();
   $('ic-champs').innerHTML = IC_CHAMPS.map(([k, l]) => `<label><span>${esc(l)}</span><textarea class="ic-ta" data-k="${k}">${esc(icLire(cfg, k).join('\n'))}</textarea></label>`).join('');
-  const html = INTERS_HTML.replace("const LS='spv-inters-v1';", "const LS='" + icCle() + "';")
+  let html = INTERS_HTML.replace("const LS='spv-inters-v1';", "const LS='" + icCle() + "';")
     .replace('<script>\n{', '<script>window.__CFG=' + JSON.stringify(cfg).replace(/</g, '\\u003c') + ';<\/script><script>\n{');
+  html = html.replace('</head>', `<style>
+    :root{color-scheme:light}html{overflow:hidden}body{background:transparent;font-family:${getComputedStyle(document.body).fontFamily.replace(/[<>`$]/g, '')}}
+    .hd,.tabbar,.card.wide:has(#themes){display:none!important}
+    .app{display:block}main{padding:0;max-width:none}
+    .side{position:static;height:auto;display:flex;flex-direction:row;flex-wrap:wrap;gap:8px;padding:0 0 16px;background:transparent;border:0;box-shadow:none}
+    .side a{min-height:42px;padding:8px 16px;border:1px solid var(--bord);background:var(--card);border-radius:999px;font-size:14.5px}
+    .side .sep,.side p{display:none}
+    @media(max-width:860px){.side{display:flex}main{padding-bottom:0}.save{bottom:0}.side a{flex:1 1 auto;justify-content:center}}
+  </style></head>`);
+  const cs = getComputedStyle(document.documentElement), th = {};
+  [['ink', 'ink'], ['ink2', 'ink2'], ['rouge', 'act'], ['rougeF', 'actF'], ['or', 'or'], ['gris', 'gris'], ['vert', 'vert'], ['orange', 'orange'], ['bleu', 'bleu']]
+    .forEach(([a, b]) => { const v = cs.getPropertyValue('--' + a).trim(); if (v) th['--' + b] = v; });
+  html = html.replace('const toast=t=>{', 'const toast=t=>{if(window.parent!==window&&parent.showToast){parent.showToast(t);return}')
+    .replace("const ask=(t,ok='Confirmer')=>new Promise(r=>{", "const ask=(t,ok='Confirmer')=>window.parent!==window?Promise.resolve(confirm(t)):new Promise(r=>{")
+    .replace('</body>', '<script>(function(){var t=' + JSON.stringify(th).replace(/</g, '\\u003c') + ';function a(){for(var k in t)document.documentElement.style.setProperty(k,t[k])}a();setTimeout(a,0);'
+      + 'addEventListener("hashchange",function(){try{parent.icHaut()}catch(e){}});})();<\/script></body>');
   try { if (window.__intersUrl) URL.revokeObjectURL(window.__intersUrl); } catch (e) {}
   window.__intersUrl = URL.createObjectURL(new Blob([html], {type: 'text/html;charset=utf-8'}));
-  $('inters-frame').src = window.__intersUrl;
+  const fr = $('inters-frame');
+  fr.onload = () => { const ajuste = () => { try { const d = fr.contentDocument; if (d && d.body) fr.style.height = Math.max(400, d.body.scrollHeight) + 'px'; } catch (e) {} };
+    ajuste(); try { const ro = new ResizeObserver(ajuste); ro.observe(fr.contentDocument.body); } catch (e) {} };
+  fr.src = window.__intersUrl;
 }
+function icHaut(){ const fr = $('inters-frame'); if (!fr) return; const y = fr.getBoundingClientRect().top + window.scrollY - 90; if (window.scrollY > y) window.scrollTo({top: Math.max(0, y), behavior: 'smooth'}); }
 function icEnregistrer(){
   if (!isAdminU()) return;
   const c = {nat: {}};
