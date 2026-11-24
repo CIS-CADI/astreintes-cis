@@ -256,6 +256,17 @@ h1,h2,h3,.font-head{font-family:Oswald,sans-serif;letter-spacing:.3px}
 .ref-t input[type=text]{width:100%;min-width:0;border:1px solid var(--bord);border-radius:8px;padding:6px 8px;font-size:14px}.ref-t input[type=color]{width:38px;height:32px;border:1px solid var(--bord);border-radius:8px;padding:2px;background:#fff}
 .ref-t .mv{border:1px solid var(--bord);background:#fff;border-radius:7px;width:28px;height:28px;cursor:pointer;color:#4b5263}.ref-t .del{border:0;background:none;color:#b3261e;cursor:pointer;font-size:13px;font-weight:600}
 .ref-t .nb{font-size:12px;color:#6b7387;white-space:nowrap}.ref-cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:22px}
+.cal-k{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}.cal-k div{border:1px solid var(--bord);border-radius:14px;padding:12px 14px;background:#fff}
+.cal-k b{display:block;font-family:Oswald,sans-serif;font-size:26px;font-weight:500;color:var(--ink);line-height:1.1}.cal-k span{font-size:12px;color:#6b7387}
+.cal-tr{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1.4fr) 110px minmax(0,1.2fr) auto;gap:10px;align-items:end}
+@media (max-width:820px){.cal-tr{grid-template-columns:1fr 1fr}.cal-tr .full{grid-column:1/-1}}
+.cal-tr label{font-size:12.5px;font-weight:600;color:#4b5263}.cal-tr label>*{margin-top:4px;width:100%}
+.cal-t td{padding:5px 8px;border-top:1px solid #eef0f2;vertical-align:middle;font-size:14px}.cal-t th{position:sticky;top:0;z-index:1}
+.cal-t input[type=number]{width:86px;border:1px solid var(--bord);border-radius:8px;padding:5px 7px;font-size:14px;text-align:right}
+.cal-t input[type=checkbox]{width:18px;height:18px;accent-color:var(--rouge)}
+.cal-t .ec{font-family:Oswald,sans-serif;font-weight:600;text-align:right}.cal-t .ec.neg{color:#b3261e}.cal-t .ec.pos{color:#1f7a3d}
+.cal-t tr.zero td:first-child{color:#8a92a6}.cal-h td{font-size:13.5px}.cal-op{display:inline-block;font-size:11.5px;font-weight:700;padding:2px 8px;border-radius:999px;background:#eef2f8;color:var(--ink)}
+.cal-op.t{background:#e7f6ec;color:var(--vert)}.cal-op.s{background:#fdecea;color:#a3221b}.cal-op.i{background:#fff4d6;color:#8a5a00}
 .tl-tags{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
 .tl-go .i{width:18px;height:18px;color:#a0a7b4}
 .cov-bars{position:relative;display:flex;align-items:flex-end;gap:4px;height:74px;padding-top:4px}
@@ -1778,6 +1789,7 @@ function normalize(d){
   if (typeof d.messageImportant !== 'string') d.messageImportant = '';
   if (!d.diffs || typeof d.diffs !== 'object' || Array.isArray(d.diffs)) d.diffs = {};
   if (!d.anos || typeof d.anos !== 'object' || Array.isArray(d.anos)) d.anos = {};
+  if (!d.calh || typeof d.calh !== 'object' || Array.isArray(d.calh)) d.calh = {};
   if (!d.menus || typeof d.menus !== 'object' || Array.isArray(d.menus)) d.menus = {};
   d.menus.labels = d.menus.labels || {}; d.menus.vis = d.menus.vis || {}; d.menus.custom = Array.isArray(d.menus.custom) ? d.menus.custom : [];
   if (!d.lus || typeof d.lus !== 'object' || Array.isArray(d.lus)) d.lus = {};
@@ -1806,6 +1818,8 @@ function flatten(d){
   put('semaines', d.semaines); put('vehicules', d.vehicules); put('config', d.config); put('message', d.messageImportant || '');
   Object.keys(d.diffs || {}).forEach(id => { if (d.diffs[id]) put('diff:' + id, d.diffs[id]); });
   Object.keys(d.anos || {}).forEach(id => { if (d.anos[id]) put('ano:' + id, d.anos[id]); });
+  if (d.cal) put('cal', d.cal);
+  Object.keys(d.calh || {}).forEach(id => { if (d.calh[id]) put('calh:' + id, d.calh[id]); });
   if (d.menus && (Object.keys(d.menus.labels || {}).length || Object.keys(d.menus.vis || {}).length || (d.menus.custom || []).length || d.menus.theme || (d.menus.outils || []).length || d.menus.radio || d.menus.dash || d.menus.sites || d.menus.acces || d.menus.inters || d.menus.ref)) put('menus', d.menus);
   Object.keys(d.lus || {}).forEach(id => { const l = d.lus[id]; if (l && Object.keys(l).length) put('lu:' + id, l); });
   Object.keys(d.dispos).forEach(a => Object.keys(d.dispos[a] || {}).forEach(s => { const w = d.dispos[a][s]; if (w && Object.keys(w).length) put(`dispo:${a}:${s}`, w); }));
@@ -2952,7 +2966,7 @@ function openSyntheseWindow(){
 }
 
 // ==================== TABLEAU DE BORD ====================
-const UI_ICONS = {inters:'<path d="M12 3v3M5.6 5.6l2.1 2.1M3 12h3M18.4 5.6l-2.1 2.1M21 12h-3"/><path d="M5 20a7 7 0 0 1 14 0z"/><path d="M12 13v4"/>',o_inters:'<path d="M12 3v3M5.6 5.6l2.1 2.1M3 12h3M18.4 5.6l-2.1 2.1M21 12h-3"/><path d="M5 20a7 7 0 0 1 14 0z"/><path d="M12 13v4"/>',secr:'<path d="M4 21V9l8-6 8 6v12"/><path d="M9 21v-6h6v6"/><path d="M9 11h.01M15 11h.01"/>',tdb:'<rect x="3" y="3" width="18" height="7" rx="1.5"/><rect x="3" y="13" width="7" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/>',liens:'<rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><path d="M17.25 13.5v7.5M13.5 17.25H21"/>',o_radio:'<rect x="6" y="7" width="12" height="14" rx="2"/><path d="M9 7 8 2.5M10 11h4M10 14.5h4M10 18h4"/>',o_pdc:'<path d="M3 15c3 0 3-4 6-4s3 4 6 4 3-4 6-4"/><path d="M3 19c3 0 3-4 6-4s3 4 6 4 3-4 6-4" opacity=".55"/><circle cx="12" cy="6" r="3"/><path d="M12 6l1.6-1.4"/>',o_ari:'<rect x="8" y="3" width="8" height="18" rx="4"/><path d="M8 9h8M12 3V1.5"/><path d="M12 13v4"/>',o_noria:'<path d="M2 16V11h9l2 3h4v2"/><circle cx="6" cy="17" r="1.8"/><circle cx="15" cy="17" r="1.8"/><path d="M14 6h7M18 3l3 3-3 3M10 6H3"/>',o_perim:'<circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7" stroke-dasharray="2.5 2.5"/><path d="M12 12 21 4.5M12 12l9 2.5"/>',o_mousse:'<path d="M7 21h10l1-11H6Z"/><path d="M6 10a3 3 0 0 1 3-4 3 3 0 0 1 5-1 3 3 0 0 1 4 5"/><circle cx="10" cy="15" r="1"/><circle cx="14" cy="17" r="1"/>',ecran:'<rect x="3" y="3.5" width="18" height="17" rx="2.5"/><circle cx="12" cy="9" r="2.6"/><path d="M7.5 17.5h9M9 14h6"/>',epsa:'<path d="M2.5 17.5V14h10l2 3.5"/><path d="M12.5 14V11h4l3 3v3.5h-2"/><circle cx="6" cy="18" r="1.8"/><circle cx="16" cy="18" r="1.8"/><path d="M5 13.5 19 3.5M6.5 14.5 20 5"/><path d="M9 11.5l1 1M12 9.3l1 1M15 7.2l1 1"/>',outils:'<path d="M3 9.5h18v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.5Z"/><path d="M8.5 9.5V6.5A1.5 1.5 0 0 1 10 5h4a1.5 1.5 0 0 1 1.5 1.5v3"/><path d="M3 13.5h18M10.5 12v3M13.5 12v3"/>',echelle:'<path d="M7 21 10.5 3M14 21 17.5 3"/><path d="M8.6 15.5h7M9.4 11.5h7M10.2 7.5h7"/><path d="M3 21h18"/>',chrono:'<circle cx="12" cy="13.5" r="7.5"/><path d="M12 13.5V9.5M10 2.5h4M18.5 6.5l1.5-1.5"/>',historique:'<path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"/><path d="M3 4v4.5h4.5"/><path d="M12 7.5V12l3 2"/>',anomalies:'<path d="M12 3 2.5 20h19L12 3Z"/><path d="M12 10v4.5M12 17.5v.01"/>',menus:'<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/>',doc:'<path d="M6 3h8l4 4v14H6Z"/><path d="M14 3v4h4M9 12h6M9 16h6"/>',link:'<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',phone:'<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2Z"/>',info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/>',broom:'<path d="M15 3 10.5 11"/><path d="M6.5 11.5h8l2 9.5h-12Z"/><path d="M9 16v5M12.5 16v5"/>',box:'<path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5Z"/><path d="m3 7.5 9 4.5 9-4.5M12 12v9"/>',building:'<path d="M4 21V5l8-3v19M12 8h8v13M2 21h20M7 8h2M7 12h2M7 16h2M15 12h2M15 16h2"/>',tool:'<path d="M14.7 6.3a4 4 0 0 0-5.3 5.3L3.5 17.5a2 2 0 0 0 2.9 2.9l5.9-5.9a4 4 0 0 0 5.3-5.3l-2.6 2.6-2.4-.5-.5-2.4 2.6-2.6Z"/>',truck:'<path d="M3 16.5V8.5a1.5 1.5 0 0 1 1.5-1.5H14v9.5"/><path d="M14 10h3.6l3.4 3.6v2.9h-2"/><circle cx="7.5" cy="17.5" r="2"/><circle cx="17" cy="17.5" r="2"/><path d="M9.5 17.5H15"/>',dashboard:'<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9v11h5v-6h4v6h5V9"/>',dispo:'<rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><path d="m8.5 14.5 2.2 2.2 4.8-4.7"/>',formation:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.2"/><path d="M12 14.2V21M9.9 11.4 3.6 9.6M14.1 11.4l6.3-1.8"/>',planning:'<rect x="3" y="3.5" width="18" height="17" rx="2.5"/><path d="M3 9h18M3 14.5h18M9 9v11.5M15 9v11.5"/>',equipes:'<path d="M12 3 3 7.5l9 4.5 9-4.5L12 3Z"/><path d="m3 12 9 4.5 9-4.5M3 16.5 12 21l9-4.5"/>',agents:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20v-1a5 5 0 0 1 5-5h3a5 5 0 0 1 5 5v1"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18.5 14.3a5 5 0 0 1 3 4.7v1"/>',entretien:'<path d="M14.7 6.3a4 4 0 0 0-5.3 5.3L3.5 17.5a2 2 0 0 0 2.9 2.9l5.9-5.9a4 4 0 0 0 5.3-5.3l-2.6 2.6-2.4-.5-.5-2.4 2.6-2.6Z"/>',synthese:'<rect x="5" y="4" width="14" height="17.5" rx="2"/><path d="M9 4V2.5h6V4M8.5 10h7M8.5 14h7M8.5 18h4"/>',vehicules:'<path d="M3 16.5V8.5a1.5 1.5 0 0 1 1.5-1.5H14v9.5"/><path d="M14 10h3.6l3.4 3.6v2.9h-2"/><circle cx="7.5" cy="17.5" r="2"/><circle cx="17" cy="17.5" r="2"/><path d="M9.5 17.5H15"/>',messages:'<path d="M4 9.5v5a1 1 0 0 0 1 1h2l6 4.5v-16L7 8.5H5a1 1 0 0 0-1 1Z"/><path d="M17 8.5a5 5 0 0 1 0 7M19.8 6a8.5 8.5 0 0 1 0 12"/>',onglets:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/>',more:'<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>',refresh:'<path d="M20.5 12a8.5 8.5 0 0 1-15.2 5.2M3.5 12A8.5 8.5 0 0 1 18.7 6.8"/><path d="M19 3v4h-4M5 21v-4h4"/>',key:'<circle cx="8" cy="15" r="4.5"/><path d="m11.2 11.8 8.3-8.3M17 6l2.5 2.5M14.5 8.5 16.5 10.5"/>',logout:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',shield:'<path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.4 7.5 9.5 4.3-1.1 7.5-4.9 7.5-9.5V6L12 3Z"/>',flag:'<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>',pin:'<path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/>',alert:'<path d="M12 3 2.5 20h19L12 3Z"/><path d="M12 10v4.5M12 17.5v.01"/>',chev:'<path d="m9 6 6 6-6 6"/>',competences:'<circle cx="12" cy="4.5" r="2.2"/><circle cx="5" cy="19" r="2.2"/><circle cx="12" cy="19" r="2.2"/><circle cx="19" cy="19" r="2.2"/><path d="M12 6.7v10.1M12 11H6.5a1.5 1.5 0 0 0-1.5 1.5v4.3M12 11h5.5a1.5 1.5 0 0 1 1.5 1.5v4.3"/>',comptes:'<rect x="4" y="10.5" width="16" height="10.5" rx="2.2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.5" r="1.4"/>',perso:'<path d="M12 21a9 9 0 1 1 9-9c0 2-1.6 3-3.3 3H15a2 2 0 0 0-1.4 3.4c.4.4.6.9.6 1.4A1.2 1.2 0 0 1 13 21h-1Z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10.5" cy="7" r="1.2"/><circle cx="15.5" cy="7.5" r="1.2"/>',star:'<path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3Z"/>',up:'<path d="m6 15 6-6 6 6"/>',down:'<path d="m6 9 6 6 6-6"/>',plus:'<path d="M12 5v14M5 12h14"/>',trash:'<path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13"/>',edit:'<path d="M4 20h4L19 9l-4-4L4 16v4Z"/>',copy:'<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5.5A1.5 1.5 0 0 0 14.5 4h-9A1.5 1.5 0 0 0 4 5.5v9A1.5 1.5 0 0 0 5.5 16H8"/>'};
+const UI_ICONS = {o_cal:'<rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/><path d="M8 14h3M13 17h3"/>',inters:'<path d="M12 3v3M5.6 5.6l2.1 2.1M3 12h3M18.4 5.6l-2.1 2.1M21 12h-3"/><path d="M5 20a7 7 0 0 1 14 0z"/><path d="M12 13v4"/>',o_inters:'<path d="M12 3v3M5.6 5.6l2.1 2.1M3 12h3M18.4 5.6l-2.1 2.1M21 12h-3"/><path d="M5 20a7 7 0 0 1 14 0z"/><path d="M12 13v4"/>',secr:'<path d="M4 21V9l8-6 8 6v12"/><path d="M9 21v-6h6v6"/><path d="M9 11h.01M15 11h.01"/>',tdb:'<rect x="3" y="3" width="18" height="7" rx="1.5"/><rect x="3" y="13" width="7" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/>',liens:'<rect x="3" y="3" width="7.5" height="7.5" rx="2"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="2"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="2"/><path d="M17.25 13.5v7.5M13.5 17.25H21"/>',o_radio:'<rect x="6" y="7" width="12" height="14" rx="2"/><path d="M9 7 8 2.5M10 11h4M10 14.5h4M10 18h4"/>',o_pdc:'<path d="M3 15c3 0 3-4 6-4s3 4 6 4 3-4 6-4"/><path d="M3 19c3 0 3-4 6-4s3 4 6 4 3-4 6-4" opacity=".55"/><circle cx="12" cy="6" r="3"/><path d="M12 6l1.6-1.4"/>',o_ari:'<rect x="8" y="3" width="8" height="18" rx="4"/><path d="M8 9h8M12 3V1.5"/><path d="M12 13v4"/>',o_noria:'<path d="M2 16V11h9l2 3h4v2"/><circle cx="6" cy="17" r="1.8"/><circle cx="15" cy="17" r="1.8"/><path d="M14 6h7M18 3l3 3-3 3M10 6H3"/>',o_perim:'<circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7" stroke-dasharray="2.5 2.5"/><path d="M12 12 21 4.5M12 12l9 2.5"/>',o_mousse:'<path d="M7 21h10l1-11H6Z"/><path d="M6 10a3 3 0 0 1 3-4 3 3 0 0 1 5-1 3 3 0 0 1 4 5"/><circle cx="10" cy="15" r="1"/><circle cx="14" cy="17" r="1"/>',ecran:'<rect x="3" y="3.5" width="18" height="17" rx="2.5"/><circle cx="12" cy="9" r="2.6"/><path d="M7.5 17.5h9M9 14h6"/>',epsa:'<path d="M2.5 17.5V14h10l2 3.5"/><path d="M12.5 14V11h4l3 3v3.5h-2"/><circle cx="6" cy="18" r="1.8"/><circle cx="16" cy="18" r="1.8"/><path d="M5 13.5 19 3.5M6.5 14.5 20 5"/><path d="M9 11.5l1 1M12 9.3l1 1M15 7.2l1 1"/>',outils:'<path d="M3 9.5h18v9a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.5Z"/><path d="M8.5 9.5V6.5A1.5 1.5 0 0 1 10 5h4a1.5 1.5 0 0 1 1.5 1.5v3"/><path d="M3 13.5h18M10.5 12v3M13.5 12v3"/>',echelle:'<path d="M7 21 10.5 3M14 21 17.5 3"/><path d="M8.6 15.5h7M9.4 11.5h7M10.2 7.5h7"/><path d="M3 21h18"/>',chrono:'<circle cx="12" cy="13.5" r="7.5"/><path d="M12 13.5V9.5M10 2.5h4M18.5 6.5l1.5-1.5"/>',historique:'<path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1"/><path d="M3 4v4.5h4.5"/><path d="M12 7.5V12l3 2"/>',anomalies:'<path d="M12 3 2.5 20h19L12 3Z"/><path d="M12 10v4.5M12 17.5v.01"/>',menus:'<path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/>',doc:'<path d="M6 3h8l4 4v14H6Z"/><path d="M14 3v4h4M9 12h6M9 16h6"/>',link:'<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',phone:'<path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2Z"/>',info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/>',broom:'<path d="M15 3 10.5 11"/><path d="M6.5 11.5h8l2 9.5h-12Z"/><path d="M9 16v5M12.5 16v5"/>',box:'<path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5Z"/><path d="m3 7.5 9 4.5 9-4.5M12 12v9"/>',building:'<path d="M4 21V5l8-3v19M12 8h8v13M2 21h20M7 8h2M7 12h2M7 16h2M15 12h2M15 16h2"/>',tool:'<path d="M14.7 6.3a4 4 0 0 0-5.3 5.3L3.5 17.5a2 2 0 0 0 2.9 2.9l5.9-5.9a4 4 0 0 0 5.3-5.3l-2.6 2.6-2.4-.5-.5-2.4 2.6-2.6Z"/>',truck:'<path d="M3 16.5V8.5a1.5 1.5 0 0 1 1.5-1.5H14v9.5"/><path d="M14 10h3.6l3.4 3.6v2.9h-2"/><circle cx="7.5" cy="17.5" r="2"/><circle cx="17" cy="17.5" r="2"/><path d="M9.5 17.5H15"/>',dashboard:'<path d="M3 10.5 12 3l9 7.5"/><path d="M5 9v11h5v-6h4v6h5V9"/>',dispo:'<rect x="3" y="4.5" width="18" height="16.5" rx="2.5"/><path d="M3 9.5h18M8 2.5v4M16 2.5v4"/><path d="m8.5 14.5 2.2 2.2 4.8-4.7"/>',formation:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="2.2"/><path d="M12 14.2V21M9.9 11.4 3.6 9.6M14.1 11.4l6.3-1.8"/>',planning:'<rect x="3" y="3.5" width="18" height="17" rx="2.5"/><path d="M3 9h18M3 14.5h18M9 9v11.5M15 9v11.5"/>',equipes:'<path d="M12 3 3 7.5l9 4.5 9-4.5L12 3Z"/><path d="m3 12 9 4.5 9-4.5M3 16.5 12 21l9-4.5"/>',agents:'<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20v-1a5 5 0 0 1 5-5h3a5 5 0 0 1 5 5v1"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18.5 14.3a5 5 0 0 1 3 4.7v1"/>',entretien:'<path d="M14.7 6.3a4 4 0 0 0-5.3 5.3L3.5 17.5a2 2 0 0 0 2.9 2.9l5.9-5.9a4 4 0 0 0 5.3-5.3l-2.6 2.6-2.4-.5-.5-2.4 2.6-2.6Z"/>',synthese:'<rect x="5" y="4" width="14" height="17.5" rx="2"/><path d="M9 4V2.5h6V4M8.5 10h7M8.5 14h7M8.5 18h4"/>',vehicules:'<path d="M3 16.5V8.5a1.5 1.5 0 0 1 1.5-1.5H14v9.5"/><path d="M14 10h3.6l3.4 3.6v2.9h-2"/><circle cx="7.5" cy="17.5" r="2"/><circle cx="17" cy="17.5" r="2"/><path d="M9.5 17.5H15"/>',messages:'<path d="M4 9.5v5a1 1 0 0 0 1 1h2l6 4.5v-16L7 8.5H5a1 1 0 0 0-1 1Z"/><path d="M17 8.5a5 5 0 0 1 0 7M19.8 6a8.5 8.5 0 0 1 0 12"/>',onglets:'<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1Z"/>',more:'<circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/>',refresh:'<path d="M20.5 12a8.5 8.5 0 0 1-15.2 5.2M3.5 12A8.5 8.5 0 0 1 18.7 6.8"/><path d="M19 3v4h-4M5 21v-4h4"/>',key:'<circle cx="8" cy="15" r="4.5"/><path d="m11.2 11.8 8.3-8.3M17 6l2.5 2.5M14.5 8.5 16.5 10.5"/>',logout:'<path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/>',clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',shield:'<path d="M12 3 4.5 6v5.5c0 4.6 3.2 8.4 7.5 9.5 4.3-1.1 7.5-4.9 7.5-9.5V6L12 3Z"/>',flag:'<path d="M5 21V4M5 4h11l-2 4 2 4H5"/>',pin:'<path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21Z"/><circle cx="12" cy="9.5" r="2.5"/>',alert:'<path d="M12 3 2.5 20h19L12 3Z"/><path d="M12 10v4.5M12 17.5v.01"/>',chev:'<path d="m9 6 6 6-6 6"/>',competences:'<circle cx="12" cy="4.5" r="2.2"/><circle cx="5" cy="19" r="2.2"/><circle cx="12" cy="19" r="2.2"/><circle cx="19" cy="19" r="2.2"/><path d="M12 6.7v10.1M12 11H6.5a1.5 1.5 0 0 0-1.5 1.5v4.3M12 11h5.5a1.5 1.5 0 0 1 1.5 1.5v4.3"/>',comptes:'<rect x="4" y="10.5" width="16" height="10.5" rx="2.2"/><path d="M8 10.5V7.5a4 4 0 0 1 8 0v3"/><circle cx="12" cy="15.5" r="1.4"/>',perso:'<path d="M12 21a9 9 0 1 1 9-9c0 2-1.6 3-3.3 3H15a2 2 0 0 0-1.4 3.4c.4.4.6.9.6 1.4A1.2 1.2 0 0 1 13 21h-1Z"/><circle cx="7.5" cy="11" r="1.2"/><circle cx="10.5" cy="7" r="1.2"/><circle cx="15.5" cy="7.5" r="1.2"/>',star:'<path d="m12 3 2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3Z"/>',up:'<path d="m6 15 6-6 6 6"/>',down:'<path d="m6 9 6 6 6-6"/>',plus:'<path d="M12 5v14M5 12h14"/>',trash:'<path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13"/>',edit:'<path d="M4 20h4L19 9l-4-4L4 16v4Z"/>',copy:'<rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5.5A1.5 1.5 0 0 0 14.5 4h-9A1.5 1.5 0 0 0 4 5.5v9A1.5 1.5 0 0 0 5.5 16H8"/>'};
 function uiIco(n){ return '<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + (UI_ICONS[n] || '') + '</svg>'; }
 function goDispo(id, garde){
   $('dispo-equipe-select').innerHTML = `<option value="${id}"></option>`; showView('dispo');
@@ -3800,10 +3814,11 @@ const OUTILS = [
   {id: 'mousse', nom: 'Mouillant / moussant', desc: 'Quantités d’émulseur et d’eau, volume de mousse, autonomie du stock.', ico: 'o_mousse', open: () => ouvrirMousse()},
   {id: 'perim', nom: 'Périmètres de sécurité', desc: 'Carte : zone d’exclusion, zone contrôlée et cône de dispersion selon le vent.', ico: 'o_perim', open: () => ouvrirPerim()},
   {id: 'radio', nom: 'Messages radio', desc: 'Ambiance, compte-rendu, SAP : message prêt à lire ou à copier. Personnalisable.', ico: 'o_radio', open: () => ouvrirRadio()},
+  {id: 'cal', nom: 'Gestion des calendriers', desc: 'Calendriers du CIS : nombre par personne, transferts entre agents, remises et sommes, avec historique.', ico: 'o_cal', adminSeul: true, open: () => ouvrirCal()},
   {id: 'chrono', nom: 'Chronomètre', desc: 'Chrono avec temps intermédiaires (manœuvres, exercices).', ico: 'chrono', open: () => ouvrirChrono()}];
 let outilEdit = null;
 function outilAcces(id){ return ((menusCfg().acces || {})[id] || []).map(Number); }
-function outilVisible(o){ return !o.restreint || isAdminU() || (currentUser && outilAcces(o.id).includes(currentUser.id)); }
+function outilVisible(o){ if (o.adminSeul) return isAdminU(); return !o.restreint || isAdminU() || (currentUser && outilAcces(o.id).includes(currentUser.id)); }
 let accOutil = null;
 function ouvrirAcces(id){
   if (!isAdminU()) return; accOutil = id; const o = OUTILS.find(x => x.id === id) || {nom: id === 'inters' ? 'Mes interventions' : id};
@@ -4022,6 +4037,147 @@ function ouvrirInters(){
   try { if (window.__intersUrl) URL.revokeObjectURL(window.__intersUrl); } catch (e) {}
   window.__intersUrl = URL.createObjectURL(new Blob([html], {type: 'text/html;charset=utf-8'}));
   $('inters-frame').src = window.__intersUrl;
+}
+
+// ==================== GESTION DES CALENDRIERS (administrateur) ====================
+const CAL_CH = {nb: 'Nombre de calendriers', pris: 'Calendriers pris', sumup: 'SumUp', rcal: 'Remise calendriers', rsumup: 'Remise SumUp', rsomme: 'Remise somme (€)', nom: 'Nom'};
+let calQ = '', calHQ = '', calTri = 'fichier';
+function calL(){ return (data.cal && data.cal.lignes) || []; }
+function calNom(id){ const l = calL().find(x => x.id === id); return l ? l.nom : '#' + id; }
+function calId(){ return 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+function calLog(o){ data.calh = data.calh || {}; data.calh[calId()] = Object.assign({t: Date.now(), par: vraiMoi() ? vraiMoi().id : (currentUser || {}).id}, o); }
+function calSauver(){ data.cal = data.cal || {lignes: []}; data.cal.maj = Date.now(); saveData(); }
+function calEcart(l){ return l.rcal == null || l.rcal === '' || l.nb == null ? null : (+l.rcal) - (+l.nb); }
+function calNum(v){ return v == null || v === '' ? '' : (+v).toLocaleString('fr-FR', {maximumFractionDigits: 2}); }
+function ouvrirCal(){
+  if (!isAdminU()) return;
+  $('ot-page').innerHTML = enteteOutil('Gestion des calendriers', 'o_cal', 'Réservé à l’administrateur. Chaque transfert et chaque modification sont enregistrés dans l’historique.')
+    + `<div class="card p-5 space-y-4"><div class="cal-k" id="cal-k"></div></div>
+    <div class="card overflow-hidden"><div class="card-head"><div><h3>Transférer des calendriers</h3><p>La personne qui donne perd le nombre indiqué, celle qui reçoit le gagne.</p></div></div>
+      <div class="p-5"><div class="cal-tr">
+        <label>Prendre à<select id="cal-de" class="sel"></select></label><label>Donner à<select id="cal-vers" class="sel"></select></label>
+        <label>Nombre<input id="cal-n" type="number" min="1" step="1" class="sel" value="5"></label><label class="full">Motif (facultatif)<input id="cal-motif" class="sel" maxlength="120" placeholder="Ex. épuisé sur son secteur"></label>
+        <button class="btn btn-red full" onclick="calTransferer()">⇄ Transférer</button></div><p id="cal-tr-info" class="text-sm text-ink-500 mt-3"></p></div></div>
+    <div class="card overflow-hidden"><div class="card-head"><div><h3>Suivi par personne</h3><p>Modifiez directement les cases : chaque changement est tracé.</p></div>
+        <div class="flex gap-2 flex-wrap"><label class="btn btn-light" style="cursor:pointer">⬆ Importer un Excel<input type="file" accept=".xlsx,.xls" class="hidden" onchange="calImporter(this)"></label><button class="btn btn-light" onclick="calExporter()">⬇ Excel</button></div></div>
+      <div class="p-4 flex flex-wrap gap-2 items-center"><input id="cal-q" class="sel" style="flex:1;min-width:180px" placeholder="Rechercher une personne…" oninput="calQ = this.value; calTable()">
+        <select class="sel" onchange="calTri = this.value; calTable()"><option value="fichier">Ordre du fichier</option><option value="nom">Tri par nom</option><option value="nb">Tri par nombre</option></select>
+        <input id="cal-new" class="sel" style="min-width:180px" placeholder="Nouvelle personne (ex. SAP DUPONT Paul)" list="cal-dl"><datalist id="cal-dl"></datalist><button class="btn btn-light" onclick="calAjouter()">+ Ajouter</button></div>
+      <div class="overflow-x-auto" style="max-height:70vh"><table class="ftbl cal-t"><thead><tr><th>Nom</th><th class="num">Nombre</th><th>Pris</th><th>SumUp</th><th class="num">Remise calendriers</th><th>Remise SumUp</th><th class="num">Remise somme (€)</th><th class="num">Écart</th><th></th></tr></thead><tbody id="cal-tb"></tbody></table></div></div>
+    <div class="card overflow-hidden"><div class="card-head"><div><h3>Historique</h3><p>Transferts, modifications, ajouts, suppressions et imports.</p></div></div>
+      <div class="p-4"><input class="sel w-full" placeholder="Filtrer par nom ou opération…" oninput="calHQ = this.value; calHisto()"></div>
+      <div class="overflow-x-auto" style="max-height:60vh"><table class="ftbl cal-h"><thead><tr><th>Date</th><th>Par</th><th>Opération</th><th>Détail</th></tr></thead><tbody id="cal-hb"></tbody></table></div></div>`;
+  $('cal-dl').innerHTML = activeAgents().map(a => `<option value="${esc(((RANGS.find(r => r[0] === agentRang(a)) || [])[2] || '').toUpperCase() + ' ' + agentName(a)).trim()}">`).join('');
+  calTout();
+}
+function calTout(){ calKpis(); calSelects(); calTable(); calHisto(); }
+function calKpis(){
+  const L = calL(), sum = f => L.reduce((t, l) => t + (+l[f] || 0), 0), pris = L.filter(l => l.pris);
+  const k = (v, t) => `<div><b>${v}</b><span>${t}</span></div>`;
+  const ec = L.map(calEcart).filter(x => x != null);
+  $('cal-k').innerHTML = !L.length ? '<p class="text-sm text-ink-500">Aucune donnée : importez le fichier Excel « Suivi des calendriers » ou ajoutez des personnes.</p>'
+    : k(calNum(sum('nb')), 'calendriers au total') + k(pris.length + ' / ' + L.length, 'personnes ayant pris') + k(calNum(pris.reduce((t, l) => t + (+l.nb || 0), 0)), 'calendriers pris (cumul)')
+    + k(calNum(L.filter(l => !l.pris).reduce((t, l) => t + (+l.nb || 0), 0)), 'calendriers non pris') + k(L.filter(l => l.sumup).length, 'avec SumUp')
+    + k(calNum(sum('rcal')), 'calendriers remis') + k(calNum(sum('rsomme')) + ' €', 'somme remise') + k(ec.length ? calNum(ec.reduce((a, b) => a + b, 0)) : '–', 'écart total (remis − pris)');
+}
+function calSelects(){
+  const opts = calL().slice().sort((a, b) => a.nom.localeCompare(b.nom, 'fr')).map(l => `<option value="${l.id}">${esc(l.nom)} (${calNum(l.nb) || 0})</option>`).join('');
+  ['cal-de', 'cal-vers'].forEach((id, i) => { const e = $(id), v = e.value; e.innerHTML = `<option value="">— ${i ? 'Qui reçoit' : 'Qui donne'} —</option>` + opts; if ([...e.options].some(o => o.value === v)) e.value = v; });
+}
+function calTable(){
+  let L = calL().slice(); const q = calQ.trim().toLowerCase();
+  if (q) L = L.filter(l => l.nom.toLowerCase().includes(q));
+  if (calTri === 'nom') L.sort((a, b) => a.nom.replace(/^\S+\s/, '').localeCompare(b.nom.replace(/^\S+\s/, ''), 'fr'));
+  if (calTri === 'nb') L.sort((a, b) => (+b.nb || 0) - (+a.nb || 0));
+  const cb = (l, f) => `<input type="checkbox" ${l[f] ? 'checked' : ''} onchange="calModif('${l.id}', '${f}', this.checked)">`;
+  const nb = (l, f, st) => `<input type="number" step="${st || 1}" value="${l[f] == null ? '' : l[f]}" onchange="calModif('${l.id}', '${f}', this.value === '' ? null : +this.value)">`;
+  $('cal-tb').innerHTML = L.map(l => { const e = calEcart(l); return `<tr class="${+l.nb ? '' : 'zero'}"><td class="font-medium whitespace-nowrap">${esc(l.nom)}</td><td class="num">${nb(l, 'nb')}</td><td class="text-center">${cb(l, 'pris')}</td><td class="text-center">${cb(l, 'sumup')}</td>
+    <td class="num">${nb(l, 'rcal')}</td><td class="text-center">${cb(l, 'rsumup')}</td><td class="num">${nb(l, 'rsomme', '0.01')}</td><td class="ec ${e == null ? '' : e < 0 ? 'neg' : e > 0 ? 'pos' : ''}">${e == null ? '' : (e > 0 ? '+' : '') + e}</td>
+    <td class="whitespace-nowrap"><button class="text-xs text-primary-600 hover:underline" onclick="calRenommer('${l.id}')">Renommer</button> · <button class="text-xs text-red-700 hover:underline" onclick="calSuppr('${l.id}')">Supprimer</button></td></tr>`; }).join('')
+    || '<tr><td colspan="9" class="text-ink-500">Aucune personne.</td></tr>';
+}
+function calHisto(){
+  const q = calHQ.trim().toLowerCase();
+  const H = Object.values(data.calh || {}).filter(Boolean).sort((a, b) => b.t - a.t);
+  const ligne = h => {
+    const par = h.par ? esc(agentName(agentById(h.par))) : '';
+    let op = '', det = '';
+    if (h.type === 'transfert') { op = '<span class="cal-op t">Transfert</span>'; det = `<b>${h.n}</b> calendrier${h.n > 1 ? 's' : ''} de <b>${esc(h.deNom)}</b> (${h.deAvant} → ${h.deApres}) vers <b>${esc(h.versNom)}</b> (${h.versAvant} → ${h.versApres})${h.motif ? ' — ' + esc(h.motif) : ''}`; }
+    else if (h.type === 'modif') { op = '<span class="cal-op">Modification</span>'; det = `<b>${esc(h.nom)}</b> · ${esc(CAL_CH[h.champ] || h.champ)} : ${esc(String(h.avant ?? '—'))} → ${esc(String(h.apres ?? '—'))}`; }
+    else if (h.type === 'ajout') { op = '<span class="cal-op t">Ajout</span>'; det = `<b>${esc(h.nom)}</b>`; }
+    else if (h.type === 'suppr') { op = '<span class="cal-op s">Suppression</span>'; det = `<b>${esc(h.nom)}</b> (${calNum(h.nb) || 0} calendriers)`; }
+    else if (h.type === 'import') { op = '<span class="cal-op i">Import</span>'; det = `${esc(h.fichier || '')} · ${h.lignes} personne(s), ${calNum(h.total)} calendriers`; }
+    return {html: `<tr><td class="whitespace-nowrap">${new Date(h.t).toLocaleString('fr-FR', {dateStyle: 'short', timeStyle: 'short'})}</td><td class="whitespace-nowrap">${par}</td><td>${op}</td><td>${det}</td></tr>`,
+      txt: (op + det + par).replace(/<[^>]+>/g, '').toLowerCase()};
+  };
+  const rows = H.map(ligne).filter(r => !q || r.txt.includes(q));
+  $('cal-hb').innerHTML = rows.map(r => r.html).join('') || '<tr><td colspan="4" class="text-ink-500">Aucune opération.</td></tr>';
+}
+function calTransferer(){
+  const de = calL().find(l => l.id === $('cal-de').value), vers = calL().find(l => l.id === $('cal-vers').value), n = Math.round(+$('cal-n').value);
+  if (!de || !vers) return showToast('Choisissez qui donne et qui reçoit');
+  if (de === vers) return showToast('Choisissez deux personnes différentes');
+  if (!(n > 0)) return showToast('Indiquez un nombre de calendriers');
+  const dAv = +de.nb || 0, vAv = +vers.nb || 0;
+  if (n > dAv && !confirm(`${de.nom} n’a que ${dAv} calendrier(s). Transférer quand même ${n} ?`)) return;
+  de.nb = dAv - n; vers.nb = vAv + n; if (vers.nb > 0) vers.pris = true;
+  calLog({type: 'transfert', de: de.id, deNom: de.nom, vers: vers.id, versNom: vers.nom, n, deAvant: dAv, deApres: de.nb, versAvant: vAv, versApres: vers.nb, motif: $('cal-motif').value.trim().slice(0, 120)});
+  calSauver(); $('cal-motif').value = '';
+  $('cal-tr-info').innerHTML = `✓ ${n} calendrier${n > 1 ? 's' : ''} : <b>${esc(de.nom)}</b> ${dAv} → ${de.nb} · <b>${esc(vers.nom)}</b> ${vAv} → ${vers.nb}`;
+  showToast('Transfert enregistré'); calTout();
+}
+function calModif(id, f, v){
+  const l = calL().find(x => x.id === id); if (!l) return;
+  const av = l[f] == null ? null : l[f]; if (av === v || (av == null && v == null)) return;
+  l[f] = v; calLog({type: 'modif', ligne: id, nom: l.nom, champ: f, avant: typeof av === 'boolean' ? (av ? 'oui' : 'non') : av, apres: typeof v === 'boolean' ? (v ? 'oui' : 'non') : v});
+  calSauver(); calKpis(); calSelects(); calHisto();
+  if (f === 'nb' || f === 'rcal') calTable();
+}
+function calAjouter(){
+  const nom = $('cal-new').value.trim().replace(/\s+/g, ' '); if (!nom) return showToast('Indiquez le nom');
+  if (calL().some(l => l.nom.toLowerCase() === nom.toLowerCase())) return showToast('Cette personne existe déjà');
+  data.cal = data.cal || {lignes: []};
+  const l = {id: calId(), nom, nb: 0, pris: false, sumup: false, rcal: null, rsumup: false, rsomme: null};
+  data.cal.lignes.push(l); calLog({type: 'ajout', ligne: l.id, nom});
+  $('cal-new').value = ''; calSauver(); calTout(); showToast(nom + ' ajouté(e)');
+}
+function calRenommer(id){ const l = calL().find(x => x.id === id); if (!l) return; const n = prompt('Nouveau nom :', l.nom); if (!n || !n.trim() || n.trim() === l.nom) return; calLog({type: 'modif', ligne: id, nom: n.trim(), champ: 'nom', avant: l.nom, apres: n.trim()}); l.nom = n.trim(); calSauver(); calTout(); }
+function calSuppr(id){
+  const l = calL().find(x => x.id === id); if (!l || !confirm(`Supprimer ${l.nom} (${calNum(l.nb) || 0} calendriers) du suivi ?`)) return;
+  data.cal.lignes = calL().filter(x => x !== l); calLog({type: 'suppr', ligne: id, nom: l.nom, nb: l.nb}); calSauver(); calTout();
+}
+async function calImporter(inp){
+  const f = inp.files && inp.files[0]; inp.value = ''; if (!f) return;
+  try { await chargerXlsx(); } catch (e) { return showToast(e.message); }
+  try {
+    const wb = XLSX.read(await f.arrayBuffer(), {type: 'array'}), ws = wb.Sheets[wb.SheetNames[0]];
+    const rows = XLSX.utils.sheet_to_json(ws, {header: 1, defval: null});
+    const h = rows.findIndex(r => r && String(r[0] || '').trim().toUpperCase() === 'NOM');
+    if (h < 0) return showToast('Colonne « NOM » introuvable dans le fichier');
+    const oui = v => v === true || /^(oui|vrai|true|x|1)$/i.test(String(v == null ? '' : v).trim()), num = v => v === null || v === '' || isNaN(+v) ? null : +v;
+    const lignes = rows.slice(h + 1).filter(r => r && r[0] && String(r[0]).trim()).map(r => ({id: calId(), nom: String(r[0]).trim(), nb: num(r[1]) || 0, pris: oui(r[2]), sumup: oui(r[3]), rcal: num(r[4]), rsumup: oui(r[5]), rsomme: num(r[6])}));
+    if (!lignes.length) return showToast('Aucune ligne trouvée');
+    if (calL().length && !confirm(`Remplacer le suivi actuel (${calL().length} personnes) par le fichier (${lignes.length} personnes) ?\nL’historique est conservé.`)) return;
+    data.cal = {lignes};
+    calLog({type: 'import', fichier: f.name, lignes: lignes.length, total: lignes.reduce((t, l) => t + l.nb, 0)});
+    calSauver(); calTout(); showToast(lignes.length + ' personnes importées');
+  } catch (e) { showToast('Fichier illisible : ' + e.message); }
+}
+async function calExporter(){
+  try { await chargerXlsx(); } catch (e) { return showToast(e.message); }
+  const L = calL(), oui = v => v ? 'OUI' : '';
+  const t1 = [['SUIVI DES CALENDRIERS — CIS Cadillac-Béguey', '', '', '', '', '', '', ''], ['Édité le ' + new Date().toLocaleString('fr-FR')], [],
+    ['NOM', 'NOMBRE DE CALENDRIER', 'CALENDRIERS PRIS', 'SUM UP', 'REMISE CALENDRIER', 'REMISE SUM UP', 'REMISE SOMME', 'ÉCART CALENDRIERS']]
+    .concat(L.map(l => [l.nom, +l.nb || 0, !!l.pris, oui(l.sumup), l.rcal == null ? '' : +l.rcal, oui(l.rsumup), l.rsomme == null ? '' : +l.rsomme, calEcart(l) == null ? '' : calEcart(l)]))
+    .concat([[], ['TOTAL', L.reduce((t, l) => t + (+l.nb || 0), 0), L.filter(l => l.pris).length, L.filter(l => l.sumup).length, L.reduce((t, l) => t + (+l.rcal || 0), 0), L.filter(l => l.rsumup).length, L.reduce((t, l) => t + (+l.rsomme || 0), 0), '']]);
+  const H = Object.values(data.calh || {}).filter(Boolean).sort((a, b) => a.t - b.t);
+  const t2 = [['Date', 'Par', 'Opération', 'De', 'Vers', 'Nombre', 'Personne', 'Champ', 'Avant', 'Après', 'Motif / détail']].concat(H.map(h => [new Date(h.t), h.par ? agentName(agentById(h.par)) : '', {transfert: 'Transfert', modif: 'Modification', ajout: 'Ajout', suppr: 'Suppression', import: 'Import'}[h.type] || h.type,
+    h.deNom || '', h.versNom || '', h.n || '', h.nom || '', CAL_CH[h.champ] || h.champ || '', h.type === 'transfert' ? `${h.deAvant} → ${h.deApres}` : h.avant ?? '', h.type === 'transfert' ? `${h.versAvant} → ${h.versApres}` : h.apres ?? '', h.motif || h.fichier || '']));
+  const wb = XLSX.utils.book_new();
+  const w1 = XLSX.utils.aoa_to_sheet(t1); w1['!cols'] = [34, 12, 12, 9, 12, 12, 13, 12].map(w => ({wch: w}));
+  const w2 = XLSX.utils.aoa_to_sheet(t2, {cellDates: true, dateNF: 'dd/mm/yyyy hh:mm'}); w2['!cols'] = [17, 20, 13, 26, 26, 8, 26, 22, 12, 12, 34].map(w => ({wch: w}));
+  XLSX.utils.book_append_sheet(wb, w1, 'Suivi calendriers'); XLSX.utils.book_append_sheet(wb, w2, 'Historique');
+  XLSX.writeFile(wb, `Calendriers_CIS_${todayISO()}.xlsx`); showToast('Fichier Excel téléchargé');
 }
 
 // ---------- aides communes aux outils de calcul ----------
