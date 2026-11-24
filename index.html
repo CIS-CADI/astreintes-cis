@@ -169,6 +169,8 @@ h1,h2,h3,.font-head{font-family:Oswald,sans-serif;letter-spacing:.3px}
 .icp-hero{display:flex;gap:18px;align-items:center;flex-wrap:wrap}.icp-hero .n{font-family:Oswald,sans-serif;font-size:44px;line-height:1;color:var(--ink)}
 .icp-bar{height:10px;border-radius:99px;background:#eef0f4;overflow:hidden;display:flex}.icp-bar i{display:block;height:100%}
 .icp-chart svg{width:100%;height:auto;display:block}
+.ag-cmp{display:flex;flex-wrap:wrap;gap:4px 6px;min-width:180px;max-width:340px}.ag-cmp label{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:3px 8px 3px 5px;border:1px solid var(--bord);border-radius:999px;background:#fff;cursor:pointer;white-space:nowrap}
+.ag-cmp label.on{background:#e3f5e9;border-color:#a9dcb9;color:var(--vert)}.ag-cmp label.auto{opacity:.75;cursor:default}.ag-cmp input{width:15px;height:15px;accent-color:#1f8a4c;margin:0}
 .sheet-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .sheet-grid button{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 6px;border-radius:14px;background:#f4f6fa;border:1px solid transparent;font-size:12.5px;font-weight:500;color:var(--ink);text-align:center;line-height:1.2}
 .sheet-grid button .i{width:24px;height:24px;color:var(--ink-2)}
@@ -2553,7 +2555,7 @@ function renderAgents(){
   const th = (k, lbl, cls) => `<th class="px-3 py-2.5 font-medium th-sort ${cls || ''} ${agentsSort.k === k ? 'on' : ''}" onclick="sortAgents('${k}')" title="Trier">${lbl}<span class="ar">${agentsSort.k === k ? (agentsSort.dir === 1 ? '▲' : '▼') : '↕'}</span></th>`;
   $('agents-head').innerHTML = `<tr>${th('nom', 'Nom', 'text-left')}${th('prenom', 'Prénom', 'text-left')}${th('grade', 'Fonction', 'text-center')}${th('rang', 'Grade', 'text-left')}${th('equipe', 'Équipe', 'text-center')}
     ${cods.map((c, i) => th('cod:' + c, c, 'text-center th-cod' + (i === 0 ? ' cod-sep' : ''))).join('')}
-    ${th('profil', 'Profil', 'text-center' + (cods.length ? ' cod-sep' : ''))}${th('identifiant', 'Identifiant', 'text-left')}
+    <th class="px-3 py-2.5 text-left font-medium cod-sep">Compétences</th>${th('profil', 'Profil', 'text-center')}${th('identifiant', 'Identifiant', 'text-left')}
     <th class="px-3 py-2.5 text-left font-medium">Mot de passe</th><th class="px-3 py-2.5 text-center font-medium">Accès</th><th class="px-3 py-2.5 text-center font-medium">Actions</th></tr>`;
   $('agents-shown').textContent = list.length + ' affiché' + (list.length > 1 ? 's' : '') + (agentsSort.k ? ' · trié' : '');
   const actifs = data.agents.filter(a => a.id !== 99);
@@ -2571,12 +2573,13 @@ function renderAgents(){
       <td class="px-3 py-2 text-center"><select class="sel" style="padding:4px 6px" onchange="changeAgentEquipe(${a.id}, this.value)">
         <option value="" ${!a.equipeNum ? 'selected' : ''}>—</option>${EQUIPES.map(n => `<option value="${n}" ${a.equipeNum == n ? 'selected' : ''}>${n}</option>`).join('')}</select>${a.equipesSup && a.equipesSup.length ? ` <span class="text-xs text-ink-500">+${a.equipesSup.join(',')}</span>` : ''}</td>
       ${cods.map((c, i) => { const on = agentCods(a).includes(c); return `<td class="cod-cell ${i === 0 ? 'cod-sep' : ''}"><button class="cod-btn ${on ? 'on' : ''}" title="${c} : ${on ? 'oui (cliquer pour retirer)' : 'non (cliquer pour ajouter)'}" onclick="toggleCod(${a.id}, '${c}')">✓</button></td>`; }).join('')}
-      <td class="px-3 py-2 text-center ${cods.length ? 'cod-sep' : ''}">${profilCell(a)}</td>
+      <td class="px-3 py-2 cod-sep">${agCompCell(a)}</td>
+      <td class="px-3 py-2 text-center">${profilCell(a)}</td>
       <td class="px-3 py-2"><input class="sel" style="width:120px;padding:4px 8px" value="${esc(a.identifiant||'')}" onchange="changeAgentIdentifiant(${a.id}, this.value)"></td>
       <td class="px-3 py-2">${a.id === currentUser.id || !isAdminU() ? '<span class="text-xs text-ink-300">—</span>' : `<button onclick="resetPassword(${a.id})" class="text-xs text-primary-600 hover:underline whitespace-nowrap">Remettre 1234</button>`}</td>
       <td class="px-3 py-2 text-center text-xs text-ink-500 whitespace-nowrap">${ROLE_ACCES[roleOf(a)]}</td>
       <td class="px-3 py-2 text-center whitespace-nowrap"><button onclick="openAgentModal(${a.id})" class="text-primary-600 hover:underline text-xs mr-2">Modifier</button>${a.id !== 99 && !a.isAdmin ? `<button onclick="deleteAgent(${a.id})" class="text-red-700 hover:underline text-xs">Supprimer</button>` : ''}</td>
-    </tr>`).join('') || `<tr><td colspan="${10 + cods.length}" class="px-4 py-6 text-center text-ink-500">Aucun agent ne correspond aux filtres.</td></tr>`;
+    </tr>`).join('') || `<tr><td colspan="${11 + cods.length}" class="px-4 py-6 text-center text-ink-500">Aucun agent ne correspond aux filtres.</td></tr>`;
 }
 function setAgentField(id, field, val){ const a = agentById(id); if (!a) return; a[field] = val; saveData(); showToast('Enregistré'); }
 function changeAgentEquipe(id, val){ const a = agentById(id); if (!a) return; a.equipeNum = val ? +val : null; saveData(); renderAgents(); showToast(`${agentName(a)} → ${val ? 'équipe ' + val : 'sans équipe'}`); }
@@ -3453,8 +3456,9 @@ function renderCompetences(){
   if (!currentUser) return;
   const ed = isFormateur(), brAll = data.arbre.branches;
   $('cp-filtre').value = cpFiltre; $('cp-filtre').classList.toggle('hidden', cpEdit || !brAll.some(b => b.items.some(it => it.lien)));
-  const br = (cpEdit || cpFiltre === 'tout') ? brAll : brAll.map(b => Object.assign({}, b, {items: b.items.filter(it => cpFiltre === 'sans' ? !it.lien : !!it.lien)})).filter(b => b.items.length);
+  let br = (cpEdit || cpFiltre === 'tout') ? brAll : brAll.map(b => Object.assign({}, b, {items: b.items.filter(it => cpFiltre === 'sans' ? !it.lien : !!it.lien)})).filter(b => b.items.length);
   if (!cpAgent || !agentById(cpAgent) || !ed) cpAgent = currentUser.id;
+  if (!ed) br = br.map(b => Object.assign({}, b, {items: b.items.filter(it => cpNiv(currentUser.id, it.id) >= 1)})).filter(b => b.items.length);
   const ag = agentById(cpAgent);
   $('cp-agent').classList.toggle('hidden', !ed);
   if (ed) $('cp-agent').innerHTML = activeAgents().slice().sort((x, y) => agentName(x).localeCompare(agentName(y), 'fr')).map(x => `<option value="${x.id}" ${x.id === cpAgent ? 'selected' : ''}>${esc(agentName(x))}${x.id === currentUser.id ? ' (moi)' : ''}</option>`).join('');
@@ -6223,6 +6227,27 @@ async function icpExporter(){
 }
 const _showView40 = showView;
 showView = function(name){ _showView40(name); if (name === 'icp') renderIcp(); };
+
+// ==================== COMPÉTENCES DANS LE PERSONNEL ====================
+function agCompItems(){ return ((data.arbre || {}).branches || []).flatMap(b => (b.items || []).map(it => Object.assign({br: b.nom}, it))); }
+function agCompCell(a){
+  const L = agCompItems(); if (!L.length) return '<span class="text-xs text-ink-300">—</span>';
+  const peut = isFormateur();
+  return `<div class="ag-cmp">${L.map(it => { const man = cpManuel(a.id, it.id), l = cpLien(it, a.id), auto = l ? l.auto : 0, on = Math.max(man, auto) >= 2, verr = !peut || (auto >= 2 && man < 2);
+    return `<label class="${on ? 'on' : ''} ${verr && peut ? 'auto' : ''}" title="${esc(it.br)} › ${esc(it.nom)}${auto >= 2 && man < 2 ? ' — acquise par la formation' : ''}"><input type="checkbox" ${on ? 'checked' : ''} ${verr ? 'disabled' : ''} onchange="agComp(${a.id}, '${it.id}', this.checked)">${esc(it.nom)}</label>`; }).join('')}</div>`;
+}
+function agComp(id, itemId, on){
+  const a = agentById(id), it = cpItemById(itemId); if (!a || !it) return;
+  const all = data.cps[id] = Object.assign({}, data.cps[id] || {});
+  if (on) all[itemId] = {n: 2, d: todayISO(), by: (vraiMoi() || currentUser).id, c: 'Personnel'}; else delete all[itemId];
+  if (!Object.keys(all).length) delete data.cps[id];
+  saveData();
+  if (/EAP\s*-?\s*1(?!\d)/i.test(it.nom + ' ' + (it.lien || ''))) { try { icpSyncAuto(); } catch (e) {} }
+  showToast(`${agentName(a)} : ${it.nom} ${on ? 'ajoutée' : 'retirée'}`); renderAgents();
+}
+const _renderCompetences42 = renderCompetences;
+renderCompetences = function(){ _renderCompetences42();
+  if (!isFormateur() && data.arbre && data.arbre.branches.length && !$('cp-arbre').innerHTML.trim()) $('cp-arbre').innerHTML = '<div class="card p-6 text-sm text-ink-500">Vous ne détenez encore aucune compétence.</div>'; };
 
 // ==================== DÉMARRAGE ====================
 boot();
