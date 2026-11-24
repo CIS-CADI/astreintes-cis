@@ -4059,7 +4059,7 @@ function ouvrirCal(){
         <label>Nombre<input id="cal-n" type="number" min="1" step="1" class="sel" value="5"></label><label class="full">Motif (facultatif)<input id="cal-motif" class="sel" maxlength="120" placeholder="Ex. épuisé sur son secteur"></label>
         <button class="btn btn-red full" onclick="calTransferer()">⇄ Transférer</button></div><p id="cal-tr-info" class="text-sm text-ink-500 mt-3"></p></div></div>
     <div class="card overflow-hidden"><div class="card-head"><div><h3>Suivi par personne</h3><p>Modifiez directement les cases : chaque changement est tracé.</p></div>
-        <div class="flex gap-2 flex-wrap"><label class="btn btn-light" style="cursor:pointer">⬆ Importer un Excel<input type="file" accept=".xlsx,.xls" class="hidden" onchange="calImporter(this)"></label><button class="btn btn-light" onclick="calExporter()">⬇ Excel</button></div></div>
+        <div class="flex gap-2 flex-wrap"><label class="btn btn-light" style="cursor:pointer">⬆ Importer un Excel<input type="file" accept=".xlsx,.xls" class="hidden" onchange="calImporter(this)"></label><button class="btn btn-red" onclick="calExporter()" title="Données, classement, stats par grade, transferts, activité par mois et historique">⬇ Export Excel (données + stats)</button></div></div>
       <div class="p-4 flex flex-wrap gap-2 items-center"><input id="cal-q" class="sel" style="flex:1;min-width:180px" placeholder="Rechercher une personne…" oninput="calQ = this.value; calTable()">
         <select class="sel" onchange="calTri = this.value; calTable()"><option value="fichier">Ordre du fichier</option><option value="nom">Tri par nom</option><option value="nb">Tri par nombre</option></select>
         <input id="cal-new" class="sel" style="min-width:180px" placeholder="Nouvelle personne (ex. SAP DUPONT Paul)" list="cal-dl"><datalist id="cal-dl"></datalist><button class="btn btn-light" onclick="calAjouter()">+ Ajouter</button></div>
@@ -4165,19 +4165,62 @@ async function calImporter(inp){
 }
 async function calExporter(){
   try { await chargerXlsx(); } catch (e) { return showToast(e.message); }
-  const L = calL(), oui = v => v ? 'OUI' : '';
-  const t1 = [['SUIVI DES CALENDRIERS — CIS Cadillac-Béguey', '', '', '', '', '', '', ''], ['Édité le ' + new Date().toLocaleString('fr-FR')], [],
+  const L = calL(), oui = v => v ? 'OUI' : '', n = v => +v || 0, somme = (A, f) => A.reduce((t, l) => t + n(l[f]), 0);
+  const H = Object.values(data.calh || {}).filter(Boolean).sort((x, y) => x.t - y.t), T = H.filter(h => h.type === 'transfert');
+  const total = somme(L, 'nb'), pris = L.filter(l => l.pris), ec = L.map(calEcart).filter(x => x != null), pct = (x, t) => t ? Math.round(x / t * 1000) / 10 : 0;
+  const auteur = vraiMoi() ? agentName(vraiMoi()) : '', edite = 'Édité le ' + new Date().toLocaleString('fr-FR') + (auteur ? ' par ' + auteur : '');
+  const tr = {}; T.forEach(h => { const d = tr[h.de] = tr[h.de] || {dn: 0, dc: 0, rn: 0, rc: 0}, r = tr[h.vers] = tr[h.vers] || {dn: 0, dc: 0, rn: 0, rc: 0}; d.dn++; d.dc += n(h.n); r.rn++; r.rc += n(h.n); });
+  const trL = id => tr[id] || {dn: 0, dc: 0, rn: 0, rc: 0};
+  const grade = nom => { const g = String(nom).split(/\s+/)[0]; return /^[A-Z]{2,4}$/.test(g) ? g : 'Autre'; };
+  // 1. Synthèse
+  const t0 = [['STATISTIQUES CALENDRIERS — CIS Cadillac-Béguey'], [edite], [], ['Indicateur', 'Valeur'],
+    ['Personnes suivies', L.length], ['Calendriers au total', total], ['Moyenne par personne', L.length ? Math.round(total / L.length * 10) / 10 : 0],
+    ['Maximum (une personne)', L.length ? Math.max(...L.map(l => n(l.nb))) : 0], ['Personnes sans calendrier', L.filter(l => !n(l.nb)).length],
+    ['Personnes ayant pris leurs calendriers', pris.length], ['Taux de prise (personnes, %)', pct(pris.length, L.length)],
+    ['Calendriers pris (cumul)', somme(pris, 'nb')], ['Calendriers non pris', total - somme(pris, 'nb')], ['Taux de prise (calendriers, %)', pct(somme(pris, 'nb'), total)],
+    ['Personnes avec SumUp', L.filter(l => l.sumup).length], ['Calendriers remis', somme(L, 'rcal')], ['Taux de remise (%)', pct(somme(L, 'rcal'), total)],
+    ['Remises SumUp', L.filter(l => l.rsumup).length], ['Somme remise (€)', Math.round(somme(L, 'rsomme') * 100) / 100],
+    ['Somme moyenne par calendrier remis (€)', somme(L, 'rcal') ? Math.round(somme(L, 'rsomme') / somme(L, 'rcal') * 100) / 100 : 0],
+    ['Écart total (remis − nombre)', ec.reduce((x, y) => x + y, 0)], ['Personnes avec un écart négatif', ec.filter(x => x < 0).length],
+    [], ['Opérations dans l\'historique', H.length], ['Transferts', T.length], ['Calendriers transférés', T.reduce((t, h) => t + n(h.n), 0)],
+    ['Modifications', H.filter(h => h.type === 'modif').length], ['Ajouts', H.filter(h => h.type === 'ajout').length], ['Suppressions', H.filter(h => h.type === 'suppr').length], ['Imports', H.filter(h => h.type === 'import').length]];
+  // 2. Suivi (données brutes)
+  const t1 = [['SUIVI DES CALENDRIERS — CIS Cadillac-Béguey'], [edite], [],
     ['NOM', 'NOMBRE DE CALENDRIER', 'CALENDRIERS PRIS', 'SUM UP', 'REMISE CALENDRIER', 'REMISE SUM UP', 'REMISE SOMME', 'ÉCART CALENDRIERS']]
-    .concat(L.map(l => [l.nom, +l.nb || 0, !!l.pris, oui(l.sumup), l.rcal == null ? '' : +l.rcal, oui(l.rsumup), l.rsomme == null ? '' : +l.rsomme, calEcart(l) == null ? '' : calEcart(l)]))
-    .concat([[], ['TOTAL', L.reduce((t, l) => t + (+l.nb || 0), 0), L.filter(l => l.pris).length, L.filter(l => l.sumup).length, L.reduce((t, l) => t + (+l.rcal || 0), 0), L.filter(l => l.rsumup).length, L.reduce((t, l) => t + (+l.rsomme || 0), 0), '']]);
-  const H = Object.values(data.calh || {}).filter(Boolean).sort((a, b) => a.t - b.t);
-  const t2 = [['Date', 'Par', 'Opération', 'De', 'Vers', 'Nombre', 'Personne', 'Champ', 'Avant', 'Après', 'Motif / détail']].concat(H.map(h => [new Date(h.t), h.par ? agentName(agentById(h.par)) : '', {transfert: 'Transfert', modif: 'Modification', ajout: 'Ajout', suppr: 'Suppression', import: 'Import'}[h.type] || h.type,
-    h.deNom || '', h.versNom || '', h.n || '', h.nom || '', CAL_CH[h.champ] || h.champ || '', h.type === 'transfert' ? `${h.deAvant} → ${h.deApres}` : h.avant ?? '', h.type === 'transfert' ? `${h.versAvant} → ${h.versApres}` : h.apres ?? '', h.motif || h.fichier || '']));
-  const wb = XLSX.utils.book_new();
-  const w1 = XLSX.utils.aoa_to_sheet(t1); w1['!cols'] = [34, 12, 12, 9, 12, 12, 13, 12].map(w => ({wch: w}));
-  const w2 = XLSX.utils.aoa_to_sheet(t2, {cellDates: true, dateNF: 'dd/mm/yyyy hh:mm'}); w2['!cols'] = [17, 20, 13, 26, 26, 8, 26, 22, 12, 12, 34].map(w => ({wch: w}));
-  XLSX.utils.book_append_sheet(wb, w1, 'Suivi calendriers'); XLSX.utils.book_append_sheet(wb, w2, 'Historique');
-  XLSX.writeFile(wb, `Calendriers_CIS_${todayISO()}.xlsx`); showToast('Fichier Excel téléchargé');
+    .concat(L.map(l => [l.nom, n(l.nb), oui(l.pris), oui(l.sumup), l.rcal == null ? '' : +l.rcal, oui(l.rsumup), l.rsomme == null ? '' : +l.rsomme, calEcart(l) == null ? '' : calEcart(l)]))
+    .concat([[], ['TOTAL', total, pris.length, L.filter(l => l.sumup).length, somme(L, 'rcal'), L.filter(l => l.rsumup).length, somme(L, 'rsomme'), ec.reduce((x, y) => x + y, 0)]]);
+  // 3. Classement
+  const C = L.slice().sort((x, y) => n(y.nb) - n(x.nb) || x.nom.localeCompare(y.nom, 'fr'));
+  const t2 = [['CLASSEMENT PAR NOMBRE DE CALENDRIERS'], [edite], [], ['Rang', 'Nom', 'Grade', 'Calendriers', '% du total', 'Pris', 'Remis', 'Écart', 'Somme remise (€)', 'Calendriers reçus (transferts)', 'Calendriers donnés (transferts)', 'Solde transferts']]
+    .concat(C.map((l, i) => { const t = trL(l.id), e = calEcart(l); return [i + 1, l.nom, grade(l.nom), n(l.nb), pct(n(l.nb), total), oui(l.pris), l.rcal == null ? '' : +l.rcal, e == null ? '' : e, l.rsomme == null ? '' : +l.rsomme, t.rc, t.dc, t.rc - t.dc]; }));
+  // 4. Par grade
+  const G = {}; L.forEach(l => { const g = grade(l.nom); (G[g] = G[g] || []).push(l); });
+  const ordreG = (typeof RANGS !== 'undefined' ? RANGS : []).map(r => String(r[2] || r[0]).toUpperCase()).reverse();
+  const gk = Object.keys(G).sort((x, y) => ((ordreG.indexOf(x) + 1) || 99) - ((ordreG.indexOf(y) + 1) || 99) || (x === 'Autre') - (y === 'Autre') || x.localeCompare(y));
+  const t3 = [['STATISTIQUES PAR GRADE'], [edite], [], ['Grade', 'Personnes', 'Calendriers', '% du total', 'Moyenne / personne', 'Personnes ayant pris', 'Calendriers remis', 'Somme remise (€)']]
+    .concat(gk.map(g => { const A = G[g], c = somme(A, 'nb'); return [g, A.length, c, pct(c, total), A.length ? Math.round(c / A.length * 10) / 10 : 0, A.filter(l => l.pris).length, somme(A, 'rcal'), somme(A, 'rsomme')]; }))
+    .concat([[], ['TOTAL', L.length, total, 100, L.length ? Math.round(total / L.length * 10) / 10 : 0, pris.length, somme(L, 'rcal'), somme(L, 'rsomme')]]);
+  // 5. Transferts par personne
+  const noms = {}; L.forEach(l => noms[l.id] = l.nom); T.forEach(h => { noms[h.de] = noms[h.de] || h.deNom; noms[h.vers] = noms[h.vers] || h.versNom; });
+  const t4 = [['TRANSFERTS PAR PERSONNE'], [edite], [], ['Nom', 'Transferts donnés', 'Calendriers donnés', 'Transferts reçus', 'Calendriers reçus', 'Solde (reçus − donnés)', 'Calendriers actuels']]
+    .concat(Object.keys(tr).sort((x, y) => String(noms[x]).localeCompare(String(noms[y]), 'fr')).map(id => { const t = tr[id], l = L.find(x => x.id === id); return [noms[id] || '(supprimé)', t.dn, t.dc, t.rn, t.rc, t.rc - t.dc, l ? n(l.nb) : '']; }));
+  if (!T.length) t4.push(['Aucun transfert enregistré']);
+  // 6. Activité par mois
+  const M = {}; H.forEach(h => { const d = new Date(h.t), k = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'); const m = M[k] = M[k] || {op: 0, tr: 0, cal: 0, mod: 0, aj: 0, su: 0, im: 0}; m.op++; if (h.type === 'transfert') { m.tr++; m.cal += n(h.n); } else if (h.type === 'modif') m.mod++; else if (h.type === 'ajout') m.aj++; else if (h.type === 'suppr') m.su++; else if (h.type === 'import') m.im++; });
+  const t5 = [['ACTIVITÉ PAR MOIS'], [edite], [], ['Mois', 'Opérations', 'Transferts', 'Calendriers transférés', 'Modifications', 'Ajouts', 'Suppressions', 'Imports']]
+    .concat(Object.keys(M).sort().map(k => { const m = M[k], [y, mo] = k.split('-'); return [new Date(+y, +mo - 1, 1).toLocaleDateString('fr-FR', {month: 'long', year: 'numeric'}), m.op, m.tr, m.cal, m.mod, m.aj, m.su, m.im]; }));
+  // 7. Historique détaillé
+  const t6 = [['Date', 'Par', 'Opération', 'De', 'Vers', 'Nombre', 'Personne', 'Champ', 'Avant', 'Après', 'Motif / détail']].concat(H.map(h => [new Date(h.t), h.par ? agentName(agentById(h.par)) : '', {transfert: 'Transfert', modif: 'Modification', ajout: 'Ajout', suppr: 'Suppression', import: 'Import'}[h.type] || h.type,
+    h.deNom || '', h.versNom || '', h.n || '', h.nom || '', CAL_CH[h.champ] || h.champ || '', h.type === 'transfert' ? `${h.deAvant} → ${h.deApres}` : h.avant ?? '', h.type === 'transfert' ? `${h.versAvant} → ${h.versApres}` : h.apres ?? '', h.motif || h.fichier || (h.type === 'import' && h.lignes ? h.lignes + ' lignes, ' + h.total + ' calendriers' : '')]));
+  const wb = XLSX.utils.book_new(), ajoute = (t, nom, cols, opt) => { const w = XLSX.utils.aoa_to_sheet(t, opt); w['!cols'] = cols.map(x => ({wch: x})); XLSX.utils.book_append_sheet(wb, w, nom); };
+  ajoute(t0, 'Synthèse', [42, 14]);
+  ajoute(t1, 'Suivi calendriers', [34, 12, 12, 9, 12, 12, 13, 12]);
+  ajoute(t2, 'Classement', [6, 34, 8, 12, 10, 7, 9, 8, 14, 16, 16, 14]);
+  ajoute(t3, 'Par grade', [10, 11, 12, 10, 14, 14, 14, 15]);
+  ajoute(t4, 'Transferts par personne', [34, 14, 14, 14, 14, 16, 14]);
+  ajoute(t5, 'Activité par mois', [18, 11, 11, 16, 13, 8, 12, 8]);
+  ajoute(t6, 'Historique', [17, 20, 13, 26, 26, 8, 26, 22, 12, 12, 34], {cellDates: true, dateNF: 'dd/mm/yyyy hh:mm'});
+  XLSX.writeFile(wb, `Calendriers_CIS_stats_${todayISO()}.xlsx`); showToast('Export Excel téléchargé (données + statistiques)');
 }
 
 // ---------- aides communes aux outils de calcul ----------
