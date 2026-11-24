@@ -2555,7 +2555,7 @@ function renderAgents(){
   const th = (k, lbl, cls) => `<th class="px-3 py-2.5 font-medium th-sort ${cls || ''} ${agentsSort.k === k ? 'on' : ''}" onclick="sortAgents('${k}')" title="Trier">${lbl}<span class="ar">${agentsSort.k === k ? (agentsSort.dir === 1 ? '▲' : '▼') : '↕'}</span></th>`;
   $('agents-head').innerHTML = `<tr>${th('nom', 'Nom', 'text-left')}${th('prenom', 'Prénom', 'text-left')}${th('grade', 'Fonction', 'text-center')}${th('rang', 'Grade', 'text-left')}${th('equipe', 'Équipe', 'text-center')}
     ${cods.map((c, i) => th('cod:' + c, c, 'text-center th-cod' + (i === 0 ? ' cod-sep' : ''))).join('')}
-    <th class="px-3 py-2.5 text-left font-medium cod-sep">Compétences</th>${th('profil', 'Profil', 'text-center')}${th('identifiant', 'Identifiant', 'text-left')}
+    ${agCompItems().map(it => `<th class="px-3 py-2.5 font-medium text-center th-cod" title="${esc(it.br)}">${esc(it.nom)}</th>`).join('')}${th('profil', 'Profil', 'text-center cod-sep')}${th('identifiant', 'Identifiant', 'text-left')}
     <th class="px-3 py-2.5 text-left font-medium">Mot de passe</th><th class="px-3 py-2.5 text-center font-medium">Accès</th><th class="px-3 py-2.5 text-center font-medium">Actions</th></tr>`;
   $('agents-shown').textContent = list.length + ' affiché' + (list.length > 1 ? 's' : '') + (agentsSort.k ? ' · trié' : '');
   const actifs = data.agents.filter(a => a.id !== 99);
@@ -2573,13 +2573,13 @@ function renderAgents(){
       <td class="px-3 py-2 text-center"><select class="sel" style="padding:4px 6px" onchange="changeAgentEquipe(${a.id}, this.value)">
         <option value="" ${!a.equipeNum ? 'selected' : ''}>—</option>${EQUIPES.map(n => `<option value="${n}" ${a.equipeNum == n ? 'selected' : ''}>${n}</option>`).join('')}</select>${a.equipesSup && a.equipesSup.length ? ` <span class="text-xs text-ink-500">+${a.equipesSup.join(',')}</span>` : ''}</td>
       ${cods.map((c, i) => { const on = agentCods(a).includes(c); return `<td class="cod-cell ${i === 0 ? 'cod-sep' : ''}"><button class="cod-btn ${on ? 'on' : ''}" title="${c} : ${on ? 'oui (cliquer pour retirer)' : 'non (cliquer pour ajouter)'}" onclick="toggleCod(${a.id}, '${c}')">✓</button></td>`; }).join('')}
-      <td class="px-3 py-2 cod-sep">${agCompCell(a)}</td>
-      <td class="px-3 py-2 text-center">${profilCell(a)}</td>
+      ${agCompTds(a)}
+      <td class="px-3 py-2 text-center cod-sep">${profilCell(a)}</td>
       <td class="px-3 py-2"><input class="sel" style="width:120px;padding:4px 8px" value="${esc(a.identifiant||'')}" onchange="changeAgentIdentifiant(${a.id}, this.value)"></td>
       <td class="px-3 py-2">${a.id === currentUser.id || !isAdminU() ? '<span class="text-xs text-ink-300">—</span>' : `<button onclick="resetPassword(${a.id})" class="text-xs text-primary-600 hover:underline whitespace-nowrap">Remettre 1234</button>`}</td>
       <td class="px-3 py-2 text-center text-xs text-ink-500 whitespace-nowrap">${ROLE_ACCES[roleOf(a)]}</td>
       <td class="px-3 py-2 text-center whitespace-nowrap"><button onclick="openAgentModal(${a.id})" class="text-primary-600 hover:underline text-xs mr-2">Modifier</button>${a.id !== 99 && !a.isAdmin ? `<button onclick="deleteAgent(${a.id})" class="text-red-700 hover:underline text-xs">Supprimer</button>` : ''}</td>
-    </tr>`).join('') || `<tr><td colspan="${11 + cods.length}" class="px-4 py-6 text-center text-ink-500">Aucun agent ne correspond aux filtres.</td></tr>`;
+    </tr>`).join('') || `<tr><td colspan="${10 + cods.length + agCompItems().length}" class="px-4 py-6 text-center text-ink-500">Aucun agent ne correspond aux filtres.</td></tr>`;
 }
 function setAgentField(id, field, val){ const a = agentById(id); if (!a) return; a[field] = val; saveData(); showToast('Enregistré'); }
 function changeAgentEquipe(id, val){ const a = agentById(id); if (!a) return; a.equipeNum = val ? +val : null; saveData(); renderAgents(); showToast(`${agentName(a)} → ${val ? 'équipe ' + val : 'sans équipe'}`); }
@@ -3480,7 +3480,7 @@ function renderCompetences(){
           <div class="flex items-center gap-2 mt-1">${barHtml(bs.pct)}<span class="text-xs text-ink-500 whitespace-nowrap">${bs.pct} % · ${bs.c[2] + bs.c[3]}/${bs.t} acquises</span></div></div>
         ${cpEdit ? `<div class="flex gap-1"><button class="icon-btn" title="Monter" onclick="cpMoveBranch(${bi}, -1)">${uiIco('up')}</button><button class="icon-btn" title="Descendre" onclick="cpMoveBranch(${bi}, 1)">${uiIco('down')}</button><button class="icon-btn danger" title="Supprimer la branche" onclick="cpDelBranch('${b.id}')">${uiIco('trash')}</button></div>` : ''}
       </div>
-      <div class="cp-tree">${b.items.map((it, ii) => { const v = cpOf(cpAgent)[it.id] || {}, l = cpLien(it, cpAgent), n = Math.max(v.n || 0, l ? l.auto : 0), auto = l && l.auto > (v.n || 0);
+      <div class="cp-tree">${b.items.map((it, ii) => { const v = cpOf(cpAgent)[it.id] || {}, l = cpLien(it, cpAgent), cd = cpCodNiv(it, cpAgent), n = Math.max(v.n || 0, l ? l.auto : 0, cd), auto = (l && l.auto > (v.n || 0)) || cd > (v.n || 0);
         return `<div class="cp-node ${NIVEAUX[n].cls}">
           ${cpEdit ? `<input class="inp" value="${esc(it.nom)}" onchange="cpRenameItem('${b.id}', '${it.id}', this.value)">
             <select class="sel cp-lien-sel" title="Lien avec la formation conduite" onchange="cpSetLien('${b.id}', '${it.id}', this.value)">${cpLienOptions(it.lien)}</select>
@@ -6250,6 +6250,60 @@ function agComp(id, itemId, on){
 const _renderCompetences42 = renderCompetences;
 renderCompetences = function(){ _renderCompetences42();
   if (!isFormateur() && data.arbre && data.arbre.branches.length && !$('cp-arbre').innerHTML.trim()) $('cp-arbre').innerHTML = '<div class="card p-6 text-sm text-ink-500">Vous ne détenez encore aucune compétence.</div>'; };
+
+// ==================== FUSION COD / COMPÉTENCES ====================
+function cpCode(it){ if (!it) return null; const c = String(it.lien || it.nom || '').trim().toUpperCase(); return codList().find(x => String(x).toUpperCase() === c) || null; }
+function cpCodItem(code){ return agCompTous().find(it => cpCode(it) === code) || null; }
+function agCompTous(){ return ((data.arbre || {}).branches || []).flatMap(b => (b.items || []).map(it => Object.assign({br: b.nom}, it))); }
+const _agentCods43 = agentCods;
+agentCods = function(a){   // COD détenues = liste du Personnel + compétences de conduite acquises dans l'arbre
+  const base = _agentCods43(a) || [], plus = [];
+  agCompTous().forEach(it => { const c = cpCode(it); if (c && !base.includes(c) && cpManuel(a.id, it.id) >= 2) plus.push(c); });
+  return plus.length ? base.concat(plus) : base;
+};
+function cpCodNiv(it, id){ const c = cpCode(it), a = agentById(id); return c && a && _agentCods43(a).includes(c) ? 2 : 0; }
+const _cpNiv43 = cpNiv;
+cpNiv = function(id, itemId){ return Math.max(_cpNiv43(id, itemId), cpCodNiv(cpItemById(itemId), id)); };
+// Personnel → arbre : retirer une COD retire aussi la compétence acquise
+const _toggleCod43 = toggleCod;
+toggleCod = function(id, code){
+  const a = agentById(id); if (!a || !isSog()) return;
+  const avait = agentCods(a).includes(code), it = cpCodItem(code);
+  if (avait && it && data.cps[id] && data.cps[id][it.id]) { const all = data.cps[id] = Object.assign({}, data.cps[id]); delete all[it.id]; if (!Object.keys(all).length) delete data.cps[id]; }
+  if (avait && !_agentCods43(a).includes(code)) { saveData(); renderAgents(); return showToast(agentName(a) + ' : ' + code + ' retiré'); }
+  _toggleCod43(id, code);
+};
+// arbre → Personnel : un niveau « acquis » coche la COD, un niveau inférieur la décoche
+const _openCpModal43 = openCpModal;
+openCpModal = function(bid, id){ _openCpModal43(bid, id); if (cpCtx && cpCodNiv(cpItemById(id), cpAgent) > cpCtx.n) { cpCtx.n = 2; drawCpNiv(); } };
+const _saveCpModal43 = saveCpModal;
+saveCpModal = function(){
+  const ctx = cpCtx ? Object.assign({}, cpCtx) : null, ag = agentById(cpAgent), code = ctx ? cpCode(cpItemById(ctx.id)) : null;
+  _saveCpModal43();
+  if (!ctx || !code || !ag || !isSog()) return;
+  const has = _agentCods43(ag).includes(code), veut = ctx.n >= 2;
+  if (has !== veut) { const set = new Set(_agentCods43(ag)); veut ? set.add(code) : set.delete(code); ag.cod = codList().filter(c => set.has(c)).concat([...set].filter(c => !codList().includes(c))); saveData(); renderCompetences(); }
+};
+// toutes les COD de la liste existent dans l'arbre des compétences
+function codAssurerArbre(){
+  if (!data.arbre || !Array.isArray(data.arbre.branches) || !isFormateur()) return;
+  const manque = codList().filter(c => !cpCodItem(c)); if (!manque.length) return;
+  let b = data.arbre.branches.find(x => x.items.some(it => cpCode(it))) || data.arbre.branches.find(x => /condui/i.test(x.nom));
+  if (!b) { b = {id: cpUid('b'), nom: 'COMPETENCES CONDUITE', items: []}; data.arbre.branches.unshift(b); }
+  manque.forEach(c => { const it = {id: cpUid('c'), nom: c}; if (data.formation && (data.formation.competences || []).some(x => x.code === c)) it.lien = c; b.items.push(it); });
+  b.items.sort((x, y) => { const i = codList().indexOf(cpCode(x)), j = codList().indexOf(cpCode(y)); return (i < 0 ? 99 : i) - (j < 0 ? 99 : j); });
+  saveData();
+}
+const _renderCompetences43 = renderCompetences;
+renderCompetences = function(){ try { codAssurerArbre(); } catch (e) {} _renderCompetences43(); };
+const _renderAgents43 = renderAgents;
+renderAgents = function(){ try { codAssurerArbre(); } catch (e) {} _renderAgents43(); };
+// autres compétences : colonnes « ✓ » comme les COD
+function agCompTds(a){
+  const peut = isFormateur();
+  return agCompItems().map((it, i) => { const man = cpManuel(a.id, it.id), l = cpLien(it, a.id), auto = l ? l.auto : 0, on = Math.max(man, auto) >= 2, verr = !peut || (auto >= 2 && man < 2);
+    return `<td class="cod-cell ${i === 0 ? 'cod-sep' : ''}"><button class="cod-btn ${on ? 'on' : ''}" ${verr ? 'disabled' : ''} title="${esc(it.nom)} : ${on ? (verr && peut ? 'acquise par la formation' : 'oui (cliquer pour retirer)') : 'non (cliquer pour ajouter)'}" onclick="agComp(${a.id}, '${it.id}', ${!on})">✓</button></td>`; }).join('');
+}
 
 // ==================== DÉMARRAGE ====================
 boot();
