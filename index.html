@@ -6522,7 +6522,7 @@ function rmTexte(){
   const su = S('suis'), ind = su.p.length;
   if (ind) L.push(`Je suis à l’adresse indiquée${su.f.length ? ', ' + su.f.join(', ') : ''}.`); else if (su.f.length) L.push(`Je suis ${su.f.join(', ')} – changement d’adresse.`);
   // Je vois
-  const vo = S('vois'); if (vo.f.length) L.push(`Je vois ${rmL(vo.f)}.`); vo.p.forEach(x => L.push(x));
+  const vo = S('vois'); if (vo.f.length) L.push(`${rmMaj(rmL(vo.f))}.`); vo.p.forEach(x => L.push(x));
   // Bilan
   if (T.bilan) { const b = k => (rmV['b.' + k] || '').trim(), q = [];
     if (b('conc')) q.push(+b('conc') > 1 ? b('conc') + ' personnes concernées' : 'une personne concernée');
@@ -6532,7 +6532,7 @@ function rmTexte(){
     if (b('dcd')) q.push(+b('dcd') > 1 ? b('dcd') + ' personnes décédées' : 'une personne décédée');
     if (q.length) L.push('Bilan provisoire : ' + rmL(q) + '.'); }
   // Je fais
-  const fa = S('fais'); if (fa.f.length) L.push(`Je fais : nous procédons ${rmL(fa.f)}.`); fa.p.forEach(x => L.push(x));
+  const fa = S('fais'); if (fa.f.length) L.push(`Nous procédons ${rmL(fa.f)}.`); fa.p.forEach(x => L.push(x));
   // Je prévois
   if (T.prevois) { const pr = S('prevois'); if (pr.f.length) L.push(`Je prévois ${rmL(pr.f)}.`); pr.p.forEach(x => L.push(x)); }
   // Je demande
