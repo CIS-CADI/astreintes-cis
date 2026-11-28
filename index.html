@@ -6336,6 +6336,8 @@ const RM_SERVICES = [{i: 'gend', l: 'Gendarmerie', o: 'la gendarmerie'}, {i: 'po
   {i: 'smur', l: 'SMUR Langon', o: 'le SMUR Langon'}, {i: 'dragon', l: 'Dragon 33', o: 'Dragon 33'}, {i: 'aut', l: 'autre : {précision}', o: v => v[0]}];
 const RM_DEM_TETE = [{i: 'conf', l: 'je confirme les moyens engagés', o: 'Je confirme les moyens engagés.', s: true}, {i: 'suff', l: 'secours suffisants', o: 'Secours suffisants.', s: true}, {h: 'Agrès et services demandés'}];
 const RM_IND = {i: 'ind', l: 'à l’adresse indiquée', o: 'à l’adresse indiquée', s: true};
+const rmN = v => (v && +v > 0 ? +v : 1) + ' ';   // nombre d'agrès demandés (1 par défaut)
+const rmAg = (i, code, choix) => choix ? {i, l: `{#nb} {${choix}}`, o: v => rmN(v[0]) + (v[1] || choix)} : {i, l: `{#nb} ${code}`, o: v => rmN(v[0]) + code};
 const rmPour = (txt) => v => txt + (v[0] ? ' pour ' + v[0] : '');
 const RM_TYPES = {
   SAP: {titre: 'A 8.1 — Message de compte rendu type SAP', court: 'de compte rendu type SAP', bilan: true,
@@ -6362,9 +6364,9 @@ const RM_TYPES = {
       {i: 'ld', l: 'opération de longue durée', s: true, o: 'Opération de longue durée.'}, {i: 'vv', l: 'victime évacuée sans surveillance de la voie veineuse', s: true, o: 'Victime évacuée sans surveillance de la voie veineuse.'},
       {i: 'dz', l: 'transport sur DZ située : {lieu}', s: true, o: v => 'Transport sur DZ' + (v[0] ? ' située ' + v[0] : '') + '.'},
       {i: 'rai', lib: true, l: 'raison : {raison}', s: true, o: v => 'Raison : ' + v[0] + '.'}, {i: 'aut', l: 'autres : {précision}', s: true, o: v => v[0] + '.'}],
-    demande: RM_DEM_TETE.concat([{i: 'vsav', l: 'VSAV', o: 'un VSAV'}, {i: 'ssu', l: '« équipe SMUR effectuée sur réseau SSU »', s: true, o: 'Équipe SMUR effectuée sur réseau SSU.'}, {i: 'ep', l: 'EP 4 / 6', o: 'un EP 4/6'},
-      {i: 'des', l: 'DÉSIN / SR / BPROT', o: 'un DÉSIN / SR / BPROT'}, {i: 'sso', l: 'SSO niveau {#n} / ATSSO', o: v => 'un SSO' + (v[0] ? ' niveau ' + v[0] : '') + ' / ATSSO'}, {i: 'op', l: 'OP3SM / OPINF / OPMED', o: 'un OP3SM / OPINF / OPMED'},
-      {i: 'cdg', l: 'CDG / CDC', o: 'un CDG / CDC'}, {i: 'div', l: 'DIV 2 / 3 + lot(s) : {lots}', o: v => 'un DIV 2/3' + (v[0] ? ' avec lot(s) ' + v[0] : '')},
+    demande: RM_DEM_TETE.concat([rmAg('vsav', 'VSAV'), {i: 'ssu', l: '« équipe SMUR effectuée sur réseau SSU »', s: true, o: 'Équipe SMUR effectuée sur réseau SSU.'}, {i: 'ep', l: '{#nb} EP {4 / 6}', o: v => rmN(v[0]) + 'EP' + (v[1] ? v[1].replace(/\s+/g, '') : ' 4/6')},
+      rmAg('des', '', 'DÉSIN / SR / BPROT'), {i: 'sso', l: '{#nb} SSO niveau {#n} / ATSSO', o: v => rmN(v[0]) + 'SSO' + (v[1] ? ' niveau ' + v[1] : '') + ' / ATSSO'}, rmAg('op', '', 'OP3SM / OPINF / OPMED'),
+      rmAg('cdg', '', 'CDG / CDC'), {i: 'div', l: '{#nb} DIV {2 / 3} + lot(s) : {lots}', o: v => rmN(v[0]) + 'DIV ' + (v[1] ? v[1].replace(/\s+/g, '') : '2/3') + (v[2] ? ' avec lot(s) ' + v[2] : '')},
       {i: 'fo', l: 'forces de l’ordre (raison : {raison})', o: rmPour('les forces de l’ordre')}, {i: 'com', l: 'autorités communales (raison : {raison})', o: rmPour('les autorités communales')},
       {i: 'voi', l: 'service de la voirie (raison : {raison})', o: rmPour('le service de la voirie')}, {i: 'novi', l: 'moyens du NOVI', o: 'les moyens du NOVI'}, {i: 'aut', l: 'autre : {précision}', o: v => v[0]}]),
     fin: [{i: 'tne', l: 'après régulation SAMU, TNE, code victime : {code}', s: true, o: v => 'Après régulation SAMU, TNE' + (v[0] ? ', code victime ' + v[0] : '') + '.'},
@@ -6396,9 +6398,9 @@ const RM_TYPES = {
       {i: 'prv', l: 'PRV (point de rassemblement des victimes), emplacement : {emplacement}', s: true, o: v => 'Mise en place d’un PRV' + (v[0] ? ' : ' + v[0] : '') + '.'},
       {i: 'ld', l: 'opération de longue durée', s: true, o: 'Opération de longue durée.'}, {i: 'evh', l: 'évacuation vers le CH {hôpital}', s: true, o: v => 'Évacuation vers le CH ' + (v[0] || '') + '.'},
       {i: 'dz', l: 'transport sur DZ située {lieu}', s: true, o: v => 'Transport sur DZ' + (v[0] ? ' située ' + v[0] : '') + '.'}, {i: 'pe', l: 'point d’engagement des renforts : {lieu}', s: true, o: v => 'Point d’engagement des renforts : ' + (v[0] || '') + '.'}],
-    demande: RM_DEM_TETE.concat([{i: 'vsav', l: 'VSAV', o: 'un VSAV'}, {i: 'ssu', l: '« équipe SMUR effectuée sur réseau SSU »', s: true, o: 'Équipe SMUR effectuée sur réseau SSU.'}, {i: 'ep', l: 'EP 4 / 6', o: 'un EP 4/6'},
-      {i: 'des', l: 'DÉSIN / SR / BPROT / FSR / CESR', o: 'un DÉSIN / SR / BPROT / FSR / CESR'}, {i: 'sso', l: 'SSO niveau {#n} / ATSSO', o: v => 'un SSO' + (v[0] ? ' niveau ' + v[0] : '') + ' / ATSSO'},
-      {i: 'op', l: 'OP3SM / OPINF / OPMED', o: 'un OP3SM / OPINF / OPMED'}, {i: 'cdg', l: 'CDG / CDC', o: 'un CDG / CDC'}, {i: 'div', l: 'DIV 2 / 3 + lot(s) : {lots}', o: v => 'un DIV 2/3' + (v[0] ? ' avec lot(s) ' + v[0] : '')},
+    demande: RM_DEM_TETE.concat([rmAg('vsav', 'VSAV'), {i: 'ssu', l: '« équipe SMUR effectuée sur réseau SSU »', s: true, o: 'Équipe SMUR effectuée sur réseau SSU.'}, {i: 'ep', l: '{#nb} EP {4 / 6}', o: v => rmN(v[0]) + 'EP' + (v[1] ? v[1].replace(/\s+/g, '') : ' 4/6')},
+      rmAg('des', '', 'DÉSIN / SR / BPROT / FSR / CESR'), {i: 'sso', l: '{#nb} SSO niveau {#n} / ATSSO', o: v => rmN(v[0]) + 'SSO' + (v[1] ? ' niveau ' + v[1] : '') + ' / ATSSO'},
+      rmAg('op', '', 'OP3SM / OPINF / OPMED'), rmAg('cdg', '', 'CDG / CDC'), {i: 'div', l: '{#nb} DIV {2 / 3} + lot(s) : {lots}', o: v => rmN(v[0]) + 'DIV ' + (v[1] ? v[1].replace(/\s+/g, '') : '2/3') + (v[2] ? ' avec lot(s) ' + v[2] : '')},
       {i: 'fo', l: 'forces de l’ordre (raison : {raison})', o: rmPour('les forces de l’ordre')}, {i: 'com', l: 'autorité communale (raison : {raison})', o: rmPour('l’autorité communale')},
       {i: 'voi', l: 'service de la voirie (raison : {raison})', o: rmPour('le service de la voirie')}, {i: 'novi', l: 'moyens NOVI', o: 'les moyens NOVI'}, {i: 'aut', l: 'autres : {précision}', o: v => v[0]}]),
     fin: [{i: 'cos', l: 'je prends l’appellation « COS {nom} » (à partir du niveau 1 de commandement)', s: true, o: v => 'Je prends l’appellation « COS ' + (v[0] || '') + ' ».'}]},
@@ -6430,9 +6432,9 @@ const RM_TYPES = {
       {i: 'int', l: 'interruption d’activité de {#j} jours ou chômage technique de {#nb} personnes', o: v => 'une interruption d’activité' + (v[0] ? ' de ' + v[0] + ' jours' : '') + (v[1] ? ' et un chômage technique de ' + v[1] + ' personnes' : '')},
       {i: 'rel', l: 'relogement de {#nb} personnes (par : {famille, mairie, autre}) — laisser vide si pas de relogement', o: v => v[0] ? 'le relogement de ' + v[0] + ' personnes' + (v[1] ? ' par ' + v[1] : '') : 'pas de relogement'},
       {i: 'eff', l: 'risque d’effondrement de {quoi}', o: v => 'un risque d’effondrement' + (v[0] ? ' de ' + v[0] : '')}],
-    demande: RM_DEM_TETE.concat([{i: 'vsav', l: 'VSAV après régulation SAMU', o: 'un VSAV après régulation SAMU'}, {i: 'ep', l: 'EP 4 / 6', o: 'un EP 4/6'}, {i: 'ech', l: 'ECH / ESP / BEA', o: 'un ECH / ESP / BEA'}, {i: 'cdg', l: 'CDG / CDC', o: 'un CDG / CDC'},
-      {i: 'sso', l: 'SSO niveau {#n} / ATSSO', o: v => 'un SSO' + (v[0] ? ' niveau ' + v[0] : '') + ' / ATSSO'}, {i: 'at', l: 'AT3SM / OPINF / OPMED', o: 'un AT3SM / OPINF / OPMED'}, {i: 'des', l: 'DÉSIN / SR / BPROT', o: 'un DÉSIN / SR / BPROT'},
-      {i: 'div', l: 'DIV 2 / 3 + lot(s) : {lots}', o: v => 'un DIV 2/3' + (v[0] ? ' avec lot(s) ' + v[0] : '')}, {i: 'vao', l: 'VAO', o: 'un VAO'}, {i: 'via', l: 'VIA', o: 'un VIA'}, {i: 'sd', l: 'référent SD / unité SD', o: 'un référent SD / une unité SD'},
+    demande: RM_DEM_TETE.concat([{i: 'vsav', l: '{#nb} VSAV après régulation SAMU', o: v => rmN(v[0]) + 'VSAV après régulation SAMU'}, {i: 'ep', l: '{#nb} EP {4 / 6}', o: v => rmN(v[0]) + 'EP' + (v[1] ? v[1].replace(/\s+/g, '') : ' 4/6')}, rmAg('ech', '', 'ECH / ESP / BEA'), rmAg('cdg', '', 'CDG / CDC'),
+      {i: 'sso', l: '{#nb} SSO niveau {#n} / ATSSO', o: v => rmN(v[0]) + 'SSO' + (v[1] ? ' niveau ' + v[1] : '') + ' / ATSSO'}, rmAg('at', '', 'AT3SM / OPINF / OPMED'), rmAg('des', '', 'DÉSIN / SR / BPROT'),
+      {i: 'div', l: '{#nb} DIV {2 / 3} + lot(s) : {lots}', o: v => rmN(v[0]) + 'DIV ' + (v[1] ? v[1].replace(/\s+/g, '') : '2/3') + (v[2] ? ' avec lot(s) ' + v[2] : '')}, rmAg('vao', 'VAO'), rmAg('via', 'VIA'), rmAg('sd', '', 'référent SD / unité SD'),
       {i: 'fo', l: 'forces de l’ordre (raison : {raison})', o: rmPour('les forces de l’ordre')}, {i: 'com', l: 'autorité communale (raison : {raison})', o: rmPour('l’autorité communale')},
       {i: 'voi', l: 'service de la voirie (raison : {raison})', o: rmPour('le service de la voirie')}, {i: 'eau', l: 'service des eaux (raison : {raison})', o: rmPour('le service des eaux')},
       {i: 'gaz', l: 'service gaz et/ou électricité (raison : {raison})', o: rmPour('le service gaz et/ou électricité')}, {i: 'aut', l: 'autre : {précision}', o: v => v[0]}]),
@@ -6534,7 +6536,8 @@ function rmTexte(){
   // Je prévois
   if (T.prevois) { const pr = S('prevois'); if (pr.f.length) L.push(`Je prévois ${rmL(pr.f)}.`); pr.p.forEach(x => L.push(x)); }
   // Je demande
-  const de = S('demande'); if (de.f.length) L.push(`Je demande ${rmL(de.f)}.`); de.p.forEach(x => L.push(x));
+  const de = S('demande'), ag = de.f.filter(x => /^\d/.test(x)), sv = de.f.filter(x => !/^\d/.test(x));
+  if (ag.length) L.push(`Je demande ${rmL(ag)} sur les lieux${sv.length ? ', ainsi que ' + rmL(sv) : ''}.`); else if (sv.length) L.push(`Je demande ${rmL(sv)}.`); de.p.forEach(x => L.push(x));
   // Moyens et autorités sur les lieux
   const mo = S('moyens'); if (mo.f.length) L.push(`${rmMaj(rmL(mo.f))} ${mo.f.length > 1 ? 'sont' : 'est'} sur les lieux.`);
   // Suite
