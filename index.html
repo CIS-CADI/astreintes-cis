@@ -6378,7 +6378,7 @@ const RM_TYPES = {
       {i: 'aut', l: 'autoroute / RD {n°}, sens {sens}, PR {PR}', o: v => 'sur ' + (v[0] ? (/^\d/.test(v[0]) ? 'la RD ' + v[0] : /^A\s?\d/i.test(v[0]) ? 'l’' + v[0] : /^(RD|RN|D|N)\s?\d/i.test(v[0]) ? 'la ' + v[0] : v[0]) : 'l’axe') + (v[1] ? ' sens ' + v[1] : '') + (v[2] ? ' au PR ' + v[2] : '')},
       {i: 'ech', l: 'entre l’échangeur {échangeur} et l’échangeur {échangeur}', o: v => 'entre l’échangeur ' + (v[0] || '') + ' et l’échangeur ' + (v[1] || '')},
       {i: 'roc', l: 'rocade de Bordeaux, sens {intérieur / extérieur}, entre l’échangeur {échangeur} et l’échangeur {échangeur}', o: v => 'sur la rocade de Bordeaux' + (v[0] ? ' sens ' + v[0] : '') + (v[1] || v[2] ? ', entre l’échangeur ' + (v[1] || '') + ' et l’échangeur ' + (v[2] || '') : '')}],
-    vois: [{i: 'acc', l: 'accident de la circulation mettant en cause :', o: (v, e) => 'un accident de la circulation' + (e.length ? ' impliquant ' + rmL(e) : ''), sub: [
+    vois: [{i: 'acc', l: 'accident de la circulation mettant en cause :', o: (v, e) => 'un AVP' + (e.length ? ' impliquant ' + rmL(e) : ''), sub: [
         {i: 'pi', l: '{#nb} piéton(s) {précision}', o: v => rmUn(v[0], 'piéton') + (v[1] ? ' (' + v[1] + ')' : '')}, {i: '2r', l: '{#nb} 2 roues ({moto, vélo})', o: v => rmUn(v[0], 'deux-roues') + (v[1] ? ' (' + v[1] + ')' : '')},
         {i: 'vl', l: '{#nb} VL ({carburation si besoin (feu)})', o: v => rmUn(v[0], 'VL', 0).replace(/VLs$/, 'VL') + (v[1] ? ' (' + v[1] + ')' : '')},
         {i: 'pl', l: '{#nb} PL (chargement : {nature, volume, état (solide, liquide, gaz)})', o: v => rmUn(v[0], 'PL', 0).replace(/PLs$/, 'PL') + (v[1] ? ' chargé de ' + v[1] : '')},
@@ -6411,7 +6411,7 @@ const RM_TYPES = {
       {i: 'obj', l: 'objet menaçant de tomber / risque d’effondrement sur {VP / bâtiment} : {précision}', o: v => 'un objet menaçant de tomber avec risque d’effondrement' + (v[0] ? ' sur ' + v[0] : '') + (v[1] ? ' (' + v[1] + ')' : '')},
       {h: 'Animal'}, {i: 'ani', l: 'animal : {type (chien, chat, hyménoptère…)}', o: (v, e) => 'un animal' + (v[0] ? ' (' + v[0] + ')' : '') + (e.length ? ' ' + rmL(e) : ''), sub: [
         {i: 'ab', l: 'blessé', o: 'blessé'}, {i: 'ap', l: 'perché', o: 'perché'}, {i: 'ac', l: 'coincé', o: 'coincé'}, {i: 'ad', l: 'dangereux / nuisible : {précision}', o: v => 'dangereux ou nuisible' + (v[0] ? ' (' + v[0] + ')' : '')}]},
-      {h: 'Fuite d’eau / local inondé'}, {i: 'fe', l: 'fuite d’eau / local inondé', o: (v, e) => 'une fuite d’eau avec local inondé' + (e.length ? ' : ' + e.join(', ') : ''), sub: [
+      {h: 'Fuite d’eau / local inondé'}, {i: 'fe', l: 'fuite d’eau / local inondé', o: (v, e) => 'une inondation (fuite d’eau / local inondé)' + (e.length ? ' : ' + e.join(', ') : ''), sub: [
         {i: 'ou', lib: true, l: 'où : {lieu}', o: v => v[0]}, {i: 'du', lib: true, l: 'due à : {cause}', o: v => 'due à ' + v[0]}, {i: 'ent', lib: true, l: 'ayant entraîné : {conséquences}', o: v => 'ayant entraîné ' + v[0]},
         {i: 'sv', lib: true, l: 'surfaces et volumes concernés : {surfaces, volumes}', o: v => 'surfaces et volumes concernés : ' + v[0]}]},
       {h: 'Relevage de personnes — PRPA'}, {i: 'prpa', l: 'personne à relever (PRPA)', o: (v, e) => 'une personne à relever' + (e.length ? ' (' + e.join(', ') + ')' : ''), sub: [
@@ -6511,6 +6511,8 @@ function rmSortie(sec, items, parent){   // → {f: fragments, p: phrases autono
   });
   return {f, p};
 }
+// « en présence de » : un → d’un, une → d’une, le → du, la → de la, les → des, voyelle → d’
+const rmDe = t => /^un\b/.test(t) ? 'd’' + t : /^une\b/.test(t) ? 'd’' + t : /^le\b/.test(t) ? 'du' + t.slice(2) : /^les\b/.test(t) ? 'des' + t.slice(3) : /^la\b/.test(t) ? 'de ' + t : /^l’/.test(t) ? 'de ' + t : /^de\b/.test(t) ? t : /^[aeiouyhéèêàâîôûAEIOUYHÉ]/.test(t) ? 'd’' + t : 'de ' + t;
 const rmMaj = t => t ? t.charAt(0).toUpperCase() + t.slice(1) : t;
 function rmTexte(){
   const T = RM_TYPES[rmType], c = radioCfg(), L = [];
@@ -6522,7 +6524,7 @@ function rmTexte(){
   const su = S('suis'), ind = su.p.length;
   if (ind) L.push(`Je suis à l’adresse indiquée${su.f.length ? ', ' + su.f.join(', ') : ''}.`); else if (su.f.length) L.push(`Je suis ${su.f.join(', ')} – changement d’adresse.`);
   // Je vois
-  const vo = S('vois'); if (vo.f.length) L.push(`${rmMaj(rmL(vo.f))}.`); vo.p.forEach(x => L.push(x));
+  const vo = S('vois'); if (vo.f.length) L.push(`En présence ${rmL(vo.f.map(rmDe))}.`); vo.p.forEach(x => L.push(x));
   // Bilan
   if (T.bilan) { const b = k => (rmV['b.' + k] || '').trim(), q = [];
     if (b('conc')) q.push(+b('conc') > 1 ? b('conc') + ' personnes concernées' : 'une personne concernée');
