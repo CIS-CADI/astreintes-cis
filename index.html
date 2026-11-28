@@ -171,6 +171,22 @@ h1,h2,h3,.font-head{font-family:Oswald,sans-serif;letter-spacing:.3px}
 .icp-chart svg{width:100%;height:auto;display:block}
 .ag-cmp{display:flex;flex-wrap:wrap;gap:4px 6px;min-width:180px;max-width:340px}.ag-cmp label{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:3px 8px 3px 5px;border:1px solid var(--bord);border-radius:999px;background:#fff;cursor:pointer;white-space:nowrap}
 .ag-cmp label.on{background:#e3f5e9;border-color:#a9dcb9;color:var(--vert)}.ag-cmp label.auto{opacity:.75;cursor:default}.ag-cmp input{width:15px;height:15px;accent-color:#1f8a4c;margin:0}
+.rm-tabs{display:flex;gap:6px;flex-wrap:wrap}.rm-tabs button{padding:9px 16px;border-radius:999px;border:1px solid var(--bord);background:var(--card,#fff);font-weight:600;font-size:14px;color:var(--ink)}.rm-tabs button.on{background:var(--ink);border-color:var(--ink);color:#fff}
+.rm-types{display:flex;gap:8px;flex-wrap:wrap}.rm-types button{flex:1;min-width:150px;text-align:left;padding:12px 14px;border-radius:14px;border:2px solid var(--bord);background:#fff}.rm-types button b{display:block;font-size:15px;color:var(--ink)}.rm-types button span{font-size:12px;color:#6b7387}
+.rm-types button.on{border-color:var(--rouge);background:#fff5f5}
+.rm-cols{display:grid;gap:14px}@media (min-width:1100px){.rm-cols{grid-template-columns:1fr 1fr 1fr}}
+.rm-sec{border:1px solid var(--bord);border-radius:14px;overflow:hidden;background:#fff}.rm-sec>h4{margin:0;padding:9px 14px;background:#eceff3;font-family:Oswald,sans-serif;font-size:17px;text-transform:uppercase;letter-spacing:.02em;color:var(--ink)}
+.rm-sec>div{padding:8px 12px 12px}
+.rm-it{display:flex;align-items:flex-start;gap:8px;padding:5px 0;font-size:14px;line-height:1.5}.rm-it>input[type=checkbox]{width:19px;height:19px;margin-top:2px;flex:none;accent-color:var(--rouge)}
+.rm-it .lb{flex:1}.rm-it input.rf{display:inline-block;border:0;border-bottom:1.5px dotted #9aa3b5;background:transparent;padding:0 3px;font:inherit;color:var(--ink);min-width:70px;width:9em;max-width:100%}.rm-it input.rf.n{width:3.2em;min-width:0;text-align:center}
+.rm-it input.rf:focus{outline:none;border-bottom-color:var(--rouge);background:#fff8f0}
+.rm-sub{margin-left:27px}.rm-h{font-weight:700;font-size:13.5px;margin:10px 0 2px;color:var(--ink)}.rm-note{font-size:12.5px;font-style:italic;color:#6b7387;margin:6px 0}
+.rm-bil{display:flex;flex-wrap:wrap;gap:8px}.rm-bil label{display:flex;align-items:center;gap:6px;border:1px solid var(--bord);border-radius:10px;padding:6px 10px;font-weight:600;font-size:13.5px;background:#f6f7f9}.rm-bil input{width:3.4em;text-align:center}
+.rm-prev{white-space:pre-wrap;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13.5px;line-height:1.55;background:#10161f;color:#e9eef5;border-radius:14px;padding:14px 16px;min-height:120px}
+.rm-act{padding:12px 0 0;display:flex;gap:8px;flex-wrap:wrap}
+.rm-h-it{border:1px solid var(--bord);border-radius:14px;background:#fff;padding:12px 14px}.rm-h-it .t{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.rm-badge{font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:999px;background:#eef1f6;color:var(--ink)}.rm-badge.SAP{background:#fde4e2;color:#a3221b}.rm-badge.SR{background:var(--orange-bg);color:#8a5a00}.rm-badge.DIV{background:#e3f0fb;color:#1d5a8f}
+.rm-h-it pre{white-space:pre-wrap;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13px;background:#f6f7f9;border-radius:10px;padding:10px 12px;margin:10px 0 0}
 .sheet-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
 .sheet-grid button{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 6px;border-radius:14px;background:#f4f6fa;border:1px solid transparent;font-size:12.5px;font-weight:500;color:var(--ink);text-align:center;line-height:1.2}
 .sheet-grid button .i{width:24px;height:24px;color:var(--ink-2)}
@@ -1822,6 +1838,7 @@ function normalize(d){
   if (!d.anos || typeof d.anos !== 'object' || Array.isArray(d.anos)) d.anos = {};
   if (!d.calh || typeof d.calh !== 'object' || Array.isArray(d.calh)) d.calh = {};
   if (!d.icpr || typeof d.icpr !== 'object' || Array.isArray(d.icpr)) d.icpr = {};
+  if (!d.rmsg || typeof d.rmsg !== 'object' || Array.isArray(d.rmsg)) d.rmsg = {};
   if (!d.menus || typeof d.menus !== 'object' || Array.isArray(d.menus)) d.menus = {};
   d.menus.labels = d.menus.labels || {}; d.menus.vis = d.menus.vis || {}; d.menus.custom = Array.isArray(d.menus.custom) ? d.menus.custom : [];
   if (!d.lus || typeof d.lus !== 'object' || Array.isArray(d.lus)) d.lus = {};
@@ -1854,6 +1871,7 @@ function flatten(d){
   Object.keys(d.calh || {}).forEach(id => { if (d.calh[id]) put('calh:' + id, d.calh[id]); });
   if (d.icp) put('icp', d.icp);
   Object.keys(d.icpr || {}).forEach(k => { if (d.icpr[k]) put('icp:' + k, d.icpr[k]); });
+  Object.keys(d.rmsg || {}).forEach(k => { if (d.rmsg[k]) put('rmsg:' + k, d.rmsg[k]); });
   if (d.menus && (Object.keys(d.menus.labels || {}).length || Object.keys(d.menus.vis || {}).length || (d.menus.custom || []).length || d.menus.theme || (d.menus.outils || []).length || d.menus.radio || d.menus.dash || d.menus.sites || d.menus.acces || d.menus.inters || d.menus.ref)) put('menus', d.menus);
   Object.keys(d.lus || {}).forEach(id => { const l = d.lus[id]; if (l && Object.keys(l).length) put('lu:' + id, l); });
   Object.keys(d.dispos).forEach(a => Object.keys(d.dispos[a] || {}).forEach(s => { const w = d.dispos[a][s]; if (w && Object.keys(w).length) put(`dispo:${a}:${s}`, w); }));
@@ -4581,9 +4599,11 @@ let radioEdit = null;
 function radioLocal(){ try { return JSON.parse(localStorage.getItem('astreinte_radio_cfg') || 'null'); } catch (e) { return null; } }
 function radioCfg(){ return Object.assign({}, RADIO_DEF, menusCfg().radio || {}, radioLocal() || {}); }
 function ouvrirRadio(){
+  if (rmOng !== 'gen') return rmRendre();
   radioEdit = JSON.parse(JSON.stringify(radioCfg()));
   $('ot-page').innerHTML = enteteOutil('Messages radio', 'o_radio', 'Compte-rendu, ambiance, SAP. Les réglages ajoutent vos engins, natures, actions et catégories au message.')
-    + `<div class="card overflow-hidden"><details id="rd-det"><summary class="px-4 py-3 font-semibold cursor-pointer">Personnaliser le générateur</summary><div class="p-4 o-f" id="rd-form"></div></details></div>
+    + rmBarre() + `<div class="card p-3 flex flex-wrap gap-2 items-center justify-between"><span class="text-sm text-ink-500">Message du générateur ci-dessous : enregistrez-le dans l’historique quand il est prêt.</span><button class="btn btn-red" onclick="rmEnregistrerGen()">💾 Enregistrer ce message</button></div>
+      <div class="card overflow-hidden"><details id="rd-det"><summary class="px-4 py-3 font-semibold cursor-pointer">Personnaliser le générateur</summary><div class="p-4 o-f" id="rd-form"></div></details></div>
       <div class="card overflow-hidden"><iframe id="rd-frame" title="Messages radio" style="display:block;width:100%;height:1600px;border:0;background:#f4f6f9"></iframe></div>`;
   radioForm(); radioCharger();
 }
@@ -6304,6 +6324,204 @@ function agCompTds(a){
   return agCompItems().map((it, i) => { const man = cpManuel(a.id, it.id), l = cpLien(it, a.id), auto = l ? l.auto : 0, on = Math.max(man, auto) >= 2, verr = !peut || (auto >= 2 && man < 2);
     return `<td class="cod-cell ${i === 0 ? 'cod-sep' : ''}"><button class="cod-btn ${on ? 'on' : ''}" ${verr ? 'disabled' : ''} title="${esc(it.nom)} : ${on ? (verr && peut ? 'acquise par la formation' : 'oui (cliquer pour retirer)') : 'non (cliquer pour ajouter)'}" onclick="agComp(${a.id}, '${it.id}', ${!on})">✓</button></td>`; }).join('');
 }
+
+// ==================== MESSAGES RADIO : MESSAGES TYPES + HISTORIQUE ====================
+// Champs : {texte} = zone de saisie, {#texte} = nombre. Une ligne « # » = intertitre, « = » = champ sans case, « ! » = remarque.
+const RM_DEM_COMMUN = (l) => l.map(x => [x[0], x[1] + (x[2] === false ? '' : ' (raison : {raison})')]);
+const RM_TYPES = {
+  SAP: {titre: 'A 8.1 — Message de compte rendu type SAP', court: 'compte rendu type SAP', bilan: true,
+    suis: [['adr', 'changement d’adresse : {adresse}']],
+    vois: [['pers', '{#nb} personne(s), code victime {code}'], ['nomb', '{#nb} (nombreuses) victimes'], ['bmm', 'blessé / malade / malaise : {précision}'],
+      ['psy', 'personne nécessitant des soins psychiatriques, pas de consentement de transport possible (S.P. à la demande d’un représentant de l’État : dangereuse pour elle-même)'],
+      ['ebr', 'personne présentant les signes d’un état d’ébriété'], ['rue', 'personne à la rue (indigente)'],
+      ['ssv', 'opération sans victime :', [['ssv1', 'après reconnaissance, aucune intervention de notre part : pas de blessé, personne partie, etc.'], ['ssv2', 'après reconnaissance, fausse alerte (pas de témoin ou de requérant à l’adresse indiquée)']]],
+      ['aut', 'autres : {précision}'], ['!', 'La classification en « Carence » ou en « Urgence » de l’opération ne doit pas faire l’objet d’échanges radio avec le SAMU.']],
+    fais: [['rec', 'reconnaissance'], ['bal', 'balisage et protection'], ['bil', 'bilan'], ['rcp', 'RCP'], ['cond', 'conditionnement de la ou des victimes'], ['hbco', 'mesure d’HbCO'],
+      ['evr', 'évacuation après régulation SAMU par : {moyen}'], ['reo', 'après régulation SAMU, réorientation de l’hôpital {hôpital} vers l’hôpital {hôpital} (raison : {raison si connue})'],
+      ['evh', 'évacuation vers l’hôpital {hôpital}, hors département ou en dehors du secteur habituel'], ['ld', 'opération de longue durée'], ['vv', 'victime évacuée sans surveillance de la voie veineuse'],
+      ['dz', 'transport sur DZ située : {lieu}'], ['smh', 'jonction SMUR / hélico'], ['sauv', 'sauvetage / mise en sécurité'], ['=rai', 'raison : {raison}'], ['aut', 'autres : {précision}']],
+    demande: RM_DEM_COMMUN([['vsav', 'VSAV', false], ['ssu', '« équipe SMUR effectuée sur réseau SSU »', false], ['ep', 'EP 4 / 6', false], ['des', 'DÉSIN / SR / BPROT', false], ['sso', 'SSO niveau {#n} / ATSSO', false],
+      ['op', 'OP3SM / OPINF / OPMED', false], ['cdg', 'CDG / CDC', false], ['div', 'DIV 2 / 3 + lot(s) : {lots}', false], ['fo', 'forces de l’ordre'], ['com', 'autorités communales'], ['voi', 'service de la voirie'], ['novi', 'moyens du NOVI', false], ['aut', 'autre : {précision}', false]]),
+    moyens: [['=smur', 'SMUR + provenance : {provenance}'], ['=serv', 'services et autorités : {services}']],
+    fin: [['tne', 'après régulation SAMU, TNE, code victime : {code}'], ['dcd', 'victime DCD : nationalité {nationalité}, cause {cause}'], ['arr', 'arrivée au CH {hôpital} à {heure}'], ['att', 'VSAV en attente d’admission au CH {hôpital} ({motif}) depuis 30 minutes']]},
+  SR: {titre: 'A 8.2 — Message type secours routier', court: 'type secours routier', bilan: true,
+    suis: [['adr', 'changement d’adresse : {adresse}'], ['=com', 'commune : {commune}'], ['=ld', 'lieu-dit : {lieu-dit}'],
+      ['aut', 'autoroute / RD {n°}, sens {sens}, PR {PR}'], ['ech', 'entre l’échangeur {échangeur} et l’échangeur {échangeur}'], ['roc', 'rocade de Bordeaux, sens {intérieur / extérieur}, entre l’échangeur {échangeur} et l’échangeur {échangeur}']],
+    vois: [['acc', 'un accident de la circulation mettant en cause :', [['pi', '{#nb} piéton(s) {précision}'], ['2r', '{#nb} 2 roues ({moto, vélo})'], ['vl', '{#nb} VL ({carburation si besoin (feu)})'],
+        ['pl', '{#nb} PL (chargement : {nature, volume, état (solide, liquide, gaz)})'], ['tram', '{#nb} tram, ligne {ligne}'], ['train', '{#nb} train, ligne {ligne}'], ['bus', '{#nb} bus ({scolaire, tourisme, nom de société})']]],
+      ['=cd', 'code danger : {code}'], ['=cm', 'code matière : {code}'], ['fui', 'présence de fuite de {produit}, phase {liquide / gaz…}'], ['loc', 'localisation de la fuite : {localisation}'], ['autv', 'autre : {précision}'],
+      ['#', 'État de la circulation'], ['cir', 'circulation :', [['ral', 'ralentie'], ['dev', 'déviée'], ['cou', 'coupée'], ['alt', 'alternée'], ['sens', 'dans le sens {sens}'], ['voies', 'sur {#n} voies']]]],
+    fais: [['bal', 'balisage protection'], ['rec', 'reconnaissance'], ['bil', 'bilan'], ['des', 'désincarcération'], ['cond', 'conditionnement de la ou des victimes'], ['prv', 'PRV (point de rassemblement des victimes), emplacement : {emplacement}'],
+      ['prot', 'protection au moyen de {moyen}'], ['ldv', 'LDV en protection'], ['ext', 'extinction au moyen de {lance à mousse / LDV…}'], ['tap', 'tapis mousse'], ['end', 'endiguer l’écoulement au moyen de {moyen}'],
+      ['exp', 'relevé explosimétrie'], ['ld', 'opération de longue durée'], ['evh', 'évacuation vers le CH {hôpital}'], ['dz', 'transport sur DZ située {lieu}'], ['smh', 'jonction SMUR / hélico'], ['pe', 'point d’engagement des renforts : {lieu}']],
+    demande: RM_DEM_COMMUN([['vsav', 'VSAV', false], ['ssu', '« équipe SMUR effectuée sur réseau SSU »', false], ['ep', 'EP 4 / 6', false], ['des', 'DÉSIN / SR / BPROT / FSR / CESR', false], ['sso', 'SSO niveau {#n} / ATSSO', false],
+      ['op', 'OP3SM / OPINF / OPMED', false], ['cdg', 'CDG / CDC', false], ['div', 'DIV 2 / 3 + lot(s) : {lots}', false], ['fo', 'forces de l’ordre'], ['com', 'autorité communale'], ['voi', 'service de la voirie'], ['novi', 'moyens NOVI', false], ['aut', 'autres : {précision}', false]]),
+    moyens: [['=smur', 'SMUR (provenance) : {provenance}'], ['=serv', 'services et autorités : {services}']],
+    fin: [['cos', 'je prends l’appellation « COS {nom} » (à partir du niveau 1 de commandement)']]},
+  DIV: {titre: 'A 8.5 — Message type opérations diverses', court: 'type opérations diverses', bilan: false,
+    suis: [['adr', 'changement d’adresse : {adresse}']],
+    vois: [['mf', 'mauvais fonctionnement de {quoi}'], ['cc', 'court-circuit intérieur / extérieur : {précision}'],
+      ['#', 'Chute d’objets'], ['cab', 'câble HTA / HTB / MT / BT / téléphonique tombé / autres : {précision}'], ['obj', 'objet menaçant de tomber / risque d’effondrement sur {VP / bâtiment} : {précision}'],
+      ['#', 'Animal'], ['ani', 'un animal {type (chien, chat, hyménoptère…)}', [['ab', 'blessé'], ['ap', 'perché'], ['ac', 'coincé'], ['ad', 'animal dangereux / nuisible : {précision}']]],
+      ['#', 'Fuite d’eau / local inondé'], ['=ou', 'où : {lieu}'], ['=du', 'due à : {cause}'], ['=ent', 'ayant entraîné : {conséquences}'], ['=sv', 'surfaces et volumes concernés : {surfaces, volumes}'],
+      ['#', 'Relevage de personnes — PRPA'], ['=circ', 'circonstances : {circonstances}'], ['=code', 'code : {code}'], ['#', 'Autres'], ['autv', '{précision}']],
+    fais: [['rec', 'reconnaissance'], ['ms', 'mise en sécurité / sauvetage de {quoi}'], ['co', 'mesure de CO'], ['bal', 'balisage et protection'], ['van', 'fermeture de vanne / compteur (eau / électricité)'],
+      ['eta', 'étaiement de {quoi}'], ['bac', 'bâchage de {#m²} m² de toiture'], ['tro', 'tronçonnage de {quoi}'], ['snd', 'sauvetage, mise en sécurité, neutralisation, destruction'], ['epu', 'épuisement et/ou assèchement'],
+      ['rel', 'relevage de personnes'], ['op', 'ouverture de porte :', [['op1', 'la fermeture des accès est réalisée'], ['op2', 'locaux non refermés, garde des biens non assurée']]],
+      ['!', 'Police non nécessaire SLL, elle sera avisée avec communication de ces informations par le CTA-CODIS.'], ['=sit', 'situation rencontrée : {situation}'], ['=prop', 'adresse et nom du propriétaire ou du locataire : {adresse, nom}'],
+      ['asc', 'ascenseur :', [['asc1', 'coupure de la force motrice'], ['asc2', 'vérification des portes palières']]], ['autf', 'autre : {précision}']],
+    prevois: [['ld', 'opération de longue durée'], ['imp', 'impact sur les {#nb} résidents ({détail})'], ['int', 'interruption d’activité de {#j} jours ou chômage technique de {#nb} personnes'],
+      ['rel', 'pas de relogement ou relogement de {#nb} (par : {famille, mairie, autre})'], ['eff', 'risque d’effondrement de {quoi}']],
+    demande: RM_DEM_COMMUN([['vsav', 'VSAV après régulation SAMU', false], ['ep', 'EP 4 / 6', false], ['ech', 'ECH / ESP / BEA', false], ['cdg', 'CDG / CDC', false], ['sso', 'SSO niveau {#n} / ATSSO', false], ['at', 'AT3SM / OPINF / OPMED', false],
+      ['des', 'DÉSIN / SR / BPROT', false], ['div', 'DIV 2 / 3 + lot(s) : {lots}', false], ['vao', 'VAO', false], ['via', 'VIA', false], ['sd', 'référent SD / unité SD', false], ['fo', 'forces de l’ordre'], ['com', 'autorité communale'],
+      ['voi', 'service de la voirie'], ['eau', 'service des eaux'], ['gaz', 'service gaz et/ou électricité'], ['aut', 'autre : {précision}', false]]),
+    moyens: [['=serv', 'services et autorités : {services}']], fin: []}
+};
+const RM_BILAN = [['conc', 'concernées'], ['vict', 'victimes'], ['impl', 'impliqués'], ['bl', 'blessés légers'], ['bg', 'blessés graves'], ['dcd', 'DCD']];
+let rmOng = 'gen', rmType = 'SAP', rmV = {}, rmEditId = null, rmHistF = '', rmHistQ = '', rmHistMoi = false, rmOuvert = {};
+function rmNouveau(){ const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); rmV = {_date: d.toISOString().slice(0, 16)}; rmEditId = null; }
+function rmBarre(){ const n = Object.keys(data.rmsg || {}).length;
+  return `<div class="card p-3"><div class="rm-tabs">${[['gen', 'Générateur rapide'], ['type', 'Messages types SAP · SR · DIV'], ['hist', `Historique (${n})`]].map(([k, l]) => `<button class="${rmOng === k ? 'on' : ''}" onclick="rmOng='${k}';ouvrirRadio()">${l}</button>`).join('')}</div></div>`; }
+function rmRendre(){
+  $('ot-page').innerHTML = enteteOutil('Messages radio', 'o_radio', 'Messages types du CODIS : cochez, complétez, le message se rédige tout seul. Enregistrez-le pour le retrouver dans l’historique.') + rmBarre() + '<div id="rm-corps" class="space-y-4"></div>';
+  rmOng === 'hist' ? rmHist() : rmForm();
+}
+// ---- rendu d'une ligne de formulaire ----
+function rmChamps(id, lbl){
+  let i = 0;
+  return esc(lbl).replace(/\{([^}]*)\}/g, (m, ph) => { const k = id + '.' + (i++), num = ph.startsWith('#'), p = num ? ph.slice(1) : ph;
+    return `<input class="rf ${num ? 'n' : ''}" ${num ? 'inputmode="numeric"' : ''} data-k="${k}" data-ck="${id}" placeholder="${p}" value="${esc(rmV[k] || '')}" oninput="rmSaisie(this)" onclick="event.stopPropagation()">`; });
+}
+function rmLigne(sec, it, parent){
+  const [id0, lbl, sub] = it;
+  if (id0 === '#') return `<div class="rm-h">${esc(lbl)}</div>`;
+  if (id0 === '!') return `<div class="rm-note">${esc(lbl)}</div>`;
+  const libre = id0.startsWith('='), id = sec + '.' + (parent ? parent + '.' : '') + id0.replace('=', '');
+  const ck = libre ? '' : `<input type="checkbox" data-c="${id}" ${rmV[id] ? 'checked' : ''} onchange="rmCoche(this)">`;
+  return `<label class="rm-it">${ck}<span class="lb">${rmChamps(id, lbl)}</span></label>` + (sub ? `<div class="rm-sub">${sub.map(x => rmLigne(sec, x, id0)).join('')}</div>` : '');
+}
+function rmSection(titre, sec, items){ return items && items.length ? `<div class="rm-sec"><h4>${titre}</h4><div>${items.map(it => rmLigne(sec, it)).join('')}</div></div>` : ''; }
+function rmForm(){
+  const T = RM_TYPES[rmType], c = radioCfg();
+  if (!rmV._date) rmNouveau();
+  const h = `<div class="card p-4 space-y-4"><div class="rm-types">${Object.keys(RM_TYPES).map(k => `<button class="${k === rmType ? 'on' : ''}" onclick="rmChoisir('${k}')"><b>${k === 'SAP' ? 'SAP' : k === 'SR' ? 'Secours routier' : 'Opérations diverses'}</b><span>${esc(RM_TYPES[k].titre.split(' — ')[0])}</span></button>`).join('')}</div>
+      <div class="flex flex-wrap gap-3 items-end"><h3 class="font-head text-lg uppercase flex-1" style="color:var(--ink);min-width:220px">${esc(T.titre)}${rmEditId ? ' <span class="rm-badge">modification</span>' : ''}</h3>
+        ${[['_num', 'N°', 'width:70px', 'numeric'], ['_date', 'Date', '', ''], ['_codis', 'N° CODIS', 'width:130px', 'numeric'], ['_dest', 'Destinataire', 'width:130px', ''], ['_orig', 'Indicatif', 'width:130px', '']].map(([k, l, st, im]) =>
+          `<label class="text-xs font-semibold text-ink-500 flex flex-col gap-1">${l}<input class="sel" ${k === '_date' ? 'type="datetime-local"' : ''} ${im ? `inputmode="${im}"` : ''} style="${st}" data-k="${k}" value="${esc(rmV[k] != null ? rmV[k] : k === '_dest' ? c.dest : k === '_orig' ? c.orig : k === '_num' ? rmNumSuivant() : '')}" oninput="rmSaisie(this)"></label>`).join('')}</div>
+      ${rmSection('Je SUIS', 'suis', T.suis)}
+      <div class="rm-cols">${rmSection('Je VOIS : « en présence de »', 'vois', T.vois)}<div class="space-y-4">${rmSection('Je FAIS : « procédons à »', 'fais', T.fais)}${rmSection('Je PRÉVOIS', 'prevois', T.prevois)}</div>
+        <div class="space-y-4">${rmSection('Je DEMANDE', 'demande', T.demande)}${rmSection('Moyens sur les lieux', 'moyens', T.moyens)}</div></div>
+      ${T.bilan ? `<div class="rm-sec"><h4>Bilan</h4><div class="rm-bil">${RM_BILAN.map(([k, l]) => `<label><input class="sel" inputmode="numeric" data-k="b.${k}" value="${esc(rmV['b.' + k] || '')}" oninput="rmSaisie(this)">${l}</label>`).join('')}</div></div>` : ''}
+      ${rmSection(rmType === 'SR' ? 'Commandement' : 'Suite de l’opération', 'fin', T.fin)}</div>
+    <div class="card p-4"><h3 class="font-semibold mb-2">Message à transmettre</h3><div id="rm-prev" class="rm-prev"></div>
+      <div class="rm-act"><button class="btn btn-red" onclick="rmEnregistrer()">💾 ${rmEditId ? 'Enregistrer les modifications' : 'Enregistrer dans l’historique'}</button><button class="btn btn-light" onclick="rmCopier(rmTexte())">Copier</button>
+        <button class="btn btn-light" onclick="if(confirm('Effacer le formulaire ?')){rmNouveau();rmForm();}">Nouveau message</button></div></div>`;
+  $('rm-corps').innerHTML = h; rmApercu();
+}
+function rmChoisir(k){ if (k === rmType) return; const garde = {_date: rmV._date, _codis: rmV._codis, _dest: rmV._dest, _orig: rmV._orig}; rmType = k; rmV = garde; rmEditId = null; rmForm(); }
+function rmNumSuivant(){ const L = Object.values(data.rmsg || {}).filter(m => m && m.type === rmType && rmV._codis && m.codis === rmV._codis); return L.length + 1; }
+function rmSaisie(el){
+  rmV[el.dataset.k] = el.value;
+  const ck = el.dataset.ck, box = ck ? document.querySelector(`#rm-corps input[data-c="${ck}"]`) : null;
+  if (box && el.value.trim() && !box.checked) { box.checked = true; rmV[ck] = true; }
+  rmApercu();
+}
+function rmCoche(el){ rmV[el.dataset.c] = el.checked; if (!el.checked) delete rmV[el.dataset.c]; rmApercu(); }
+// ---- rédaction du message ----
+function rmRemplir(id, lbl){ let i = 0; return lbl.replace(/\{([^}]*)\}/g, () => (rmV[id + '.' + (i++)] || '').trim()); }
+function rmNettoie(t){ return t.replace(/\(\s*(raison\s*:\s*)?\)/g, '').replace(/\(\s*raison\s*:\s*([^)]*)\)/g, '(raison : $1)').replace(/\s+([,.)])/g, '$1').replace(/\(\s+/g, '(').replace(/\s{2,}/g, ' ').replace(/\s*:\s*$/, '').replace(/\s*,\s*$/, '').trim(); }
+function rmItems(sec, items, parent){
+  const out = [];
+  (items || []).forEach(([id0, lbl, sub]) => {
+    if (id0 === '#' || id0 === '!') return;
+    const libre = id0.startsWith('='), id = sec + '.' + (parent ? parent + '.' : '') + id0.replace('=', '');
+    const champs = (lbl.match(/\{/g) || []).length, rempli = [...Array(champs).keys()].some(i => (rmV[id + '.' + i] || '').trim());
+    const enf = sub ? rmItems(sec, sub, id0) : [];
+    if ((libre && rempli) || (!libre && rmV[id]) || enf.length) { let t = rmNettoie(rmRemplir(id, lbl)); if (enf.length) t = (t + (/:\s*$/.test(lbl) ? ' : ' : ', ') + enf.join(', ')).replace(/^\s*[:,]\s*/, ''); out.push(t); }
+  });
+  return out;
+}
+function rmTexte(){
+  const T = RM_TYPES[rmType], c = radioCfg(), L = [];
+  const dest = (rmV._dest != null ? rmV._dest : c.dest) || 'CODIS', orig = (rmV._orig != null ? rmV._orig : c.orig) || '';
+  const num = rmV._num != null && rmV._num !== '' ? rmV._num : rmNumSuivant();
+  L.push(`${dest} de ${orig}, message ${T.court} n° ${num}${rmV._codis ? ', opération CODIS n° ' + rmV._codis : ''}.`);
+  const sec = (k, titre, avant) => { const it = rmItems(k, T[k]); if (it.length) L.push(`${titre} ${avant || ''}${it.join(' ; ')}.`.replace(/\s+\./, '.').replace('..', '.')); };
+  sec('suis', 'Je suis :', ''); sec('vois', 'Je vois :', 'en présence de '); sec('fais', 'Je fais :', 'procédons à '); sec('prevois', 'Je prévois :', ''); sec('demande', 'Je demande :', ''); sec('moyens', 'Moyens sur les lieux :', '');
+  if (T.bilan) { const b = k => (rmV['b.' + k] || '').trim(), p = [];
+    if (b('conc')) p.push(b('conc') + ' personne(s) concernée(s)'); if (b('vict')) p.push(b('vict') + ' victime(s)' + (b('impl') ? ' dont ' + b('impl') + ' impliqué(s)' : '')); else if (b('impl')) p.push(b('impl') + ' impliqué(s)');
+    if (b('bl')) p.push(b('bl') + ' blessé(s) léger(s)'); if (b('bg')) p.push(b('bg') + ' blessé(s) grave(s)'); if (b('dcd')) p.push(b('dcd') + ' DCD');
+    if (p.length) L.push('Bilan : ' + p.join(', ') + '.'); }
+  const f = rmItems('fin', T.fin); if (f.length) L.push(f.map(x => x.charAt(0).toUpperCase() + x.slice(1)).join('. ') + '.');
+  L.push('PARLEZ.');
+  return L.join('\n').replace(/\bde (un|une|ou)\b/g, 'd’$1').replace(/\bde (a|à) /g, 'de $1 ');
+}
+function rmApercu(){ const e = $('rm-prev'); if (e) e.textContent = rmTexte(); }
+function rmCopier(t){ (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => showToast('Message copié'), () => { const x = document.createElement('textarea'); x.value = t; document.body.appendChild(x); x.select(); try { document.execCommand('copy'); showToast('Message copié'); } catch (e) {} x.remove(); }); }
+function rmId(){ return 'm' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+function rmSauver(rec){ data.rmsg[rec.id] = rec; saveData(); }
+function rmEnregistrer(){
+  const T = RM_TYPES[rmType], texte = rmTexte();
+  if (texte.split('\n').length <= 2) return showToast('Cochez ou complétez au moins une ligne avant d’enregistrer');
+  const moi = vraiMoi() || currentUser, ancien = rmEditId ? data.rmsg[rmEditId] : null;
+  const v = {}; Object.keys(rmV).forEach(k => { if (rmV[k] !== '' && rmV[k] != null && rmV[k] !== false) v[k] = rmV[k]; });
+  const rec = {id: rmEditId || rmId(), t: ancien ? ancien.t : Date.now(), maj: ancien ? Date.now() : undefined, par: ancien ? ancien.par : moi.id, type: rmType, titre: T.titre,
+    num: String(v._num || rmNumSuivant()), codis: v._codis || '', date: v._date || '', texte, v};
+  if (!rec.maj) delete rec.maj;
+  rmSauver(rec); showToast(ancien ? 'Message modifié' : 'Message enregistré dans l’historique');
+  rmNouveau(); rmOng = 'hist'; rmOuvert = {[rec.id]: true}; rmRendre();
+}
+function rmEnregistrerGen(){
+  let txt = '', genre = 'Générateur';
+  try { const d = $('rd-frame').contentDocument; txt = (d.getElementById('preview') || {}).innerText || '';
+    genre = [['blocAmbiance', 'Ambiance'], ['blocCompteRendu', 'Compte-rendu'], ['blocSAP', 'SAP']].find(([i]) => { const e = d.getElementById(i); return e && e.offsetParent !== null; })?.[1] || 'Générateur'; } catch (e) {}
+  txt = txt.trim(); if (!txt || txt.length < 15) return showToast('Le message du générateur est vide');
+  const moi = vraiMoi() || currentUser, d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+  rmSauver({id: rmId(), t: Date.now(), par: moi.id, type: 'GEN', titre: 'Générateur rapide — ' + genre, num: '', codis: '', date: d.toISOString().slice(0, 16), texte: txt.slice(0, 6000)});
+  showToast('Message enregistré dans l’historique');
+}
+// ---- historique ----
+function rmPeutModifier(m){ const moi = vraiMoi(); return !!moi && (moi.isAdmin || m.par === moi.id); }
+function rmHist(){
+  const moi = vraiMoi() || currentUser, q = rmHistQ.trim().toLowerCase(), sog = isSog();
+  let L = Object.values(data.rmsg || {}).filter(Boolean).sort((a, b) => (b.t || 0) - (a.t || 0));
+  if (rmHistF) L = L.filter(m => m.type === rmHistF); if (rmHistMoi) L = L.filter(m => m.par === moi.id);
+  if (q) L = L.filter(m => (m.texte + ' ' + (m.codis || '') + ' ' + agentName(agentById(m.par) || {nom: '', prenom: ''})).toLowerCase().includes(q));
+  const lib = {SAP: 'SAP', SR: 'Secours routier', DIV: 'Opérations diverses', GEN: 'Générateur'};
+  const dt = m => { const d = m.date ? new Date(m.date) : new Date(m.t); return isNaN(d) ? '' : d.toLocaleString('fr-FR', {day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'}); };
+  $('rm-corps').innerHTML = `<div class="card p-4 space-y-3"><div class="flex flex-wrap gap-2 items-center"><select class="sel" onchange="rmHistF=this.value;rmHist()"><option value="">Tous les types</option>${Object.keys(lib).map(k => `<option value="${k}" ${k === rmHistF ? 'selected' : ''}>${lib[k]}</option>`).join('')}</select>
+      <input class="sel" style="flex:1;min-width:160px" placeholder="Rechercher (texte, n° CODIS, agent)…" value="${esc(rmHistQ)}" oninput="rmHistQ=this.value;clearTimeout(window._rmq);window._rmq=setTimeout(()=>{rmHist();const e=document.querySelector('#rm-corps input.sel');if(e){e.focus();e.setSelectionRange(e.value.length,e.value.length);}},250)">
+      ${sog ? `<label class="text-sm flex items-center gap-2"><input type="checkbox" ${rmHistMoi ? 'checked' : ''} onchange="rmHistMoi=this.checked;rmHist()"> Seulement les miens</label><button class="btn btn-light" onclick="rmExporter()">⬇ Excel</button>` : ''}</div>
+      <p class="text-xs text-ink-500">${L.length} message(s)${sog ? ' · vous voyez les messages de tout le centre' : ' · vous voyez vos messages'}</p></div>
+    ${L.slice(0, 300).map(m => `<div class="rm-h-it"><div class="t"><span class="rm-badge ${m.type}">${lib[m.type] || m.type}</span><b>${m.num ? 'N° ' + esc(m.num) : ''}${m.codis ? ' · CODIS ' + esc(m.codis) : ''}</b><span class="text-sm text-ink-500">${dt(m)} · ${esc(agentById(m.par) ? agentName(agentById(m.par)) : '—')}${m.maj ? ' · modifié' : ''}</span><span class="flex-1"></span>
+        <button class="btn btn-light" style="padding:5px 12px" onclick="rmOuvert['${m.id}']=!rmOuvert['${m.id}'];rmHist()">${rmOuvert[m.id] ? 'Masquer' : 'Voir'}</button>
+        <button class="btn btn-light" style="padding:5px 12px" onclick="rmCopier(data.rmsg['${m.id}'].texte)">Copier</button>
+        ${m.v && RM_TYPES[m.type] ? `<button class="btn btn-light" style="padding:5px 12px" onclick="rmReprendre('${m.id}', false)">Dupliquer</button>` : ''}
+        ${rmPeutModifier(m) && m.v && RM_TYPES[m.type] ? `<button class="btn btn-light" style="padding:5px 12px" onclick="rmReprendre('${m.id}', true)">Modifier</button>` : ''}
+        ${rmPeutModifier(m) ? `<button class="text-xs text-red-700 hover:underline" onclick="rmSupprimer('${m.id}')">Supprimer</button>` : ''}</div>
+      ${rmOuvert[m.id] ? `<pre>${esc(m.texte)}</pre>` : `<p class="text-sm text-ink-500 mt-1" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${esc(m.texte.split('\n').slice(1, 3).join(' '))}</p>`}</div>`).join('') || '<div class="card p-6 text-sm text-ink-500">Aucun message enregistré.</div>'}`;
+}
+function rmReprendre(id, modifier){
+  const m = data.rmsg[id]; if (!m || !m.v) return;
+  rmType = m.type; rmV = Object.assign({}, m.v); rmEditId = modifier ? id : null;
+  if (!modifier) { const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); rmV._date = d.toISOString().slice(0, 16); delete rmV._num; }
+  rmOng = 'type'; rmRendre();
+}
+function rmSupprimer(id){ const m = data.rmsg[id]; if (!m || !rmPeutModifier(m) || !confirm('Supprimer ce message de l’historique ?')) return; delete data.rmsg[id]; saveData(); showToast('Message supprimé'); rmRendre(); }
+async function rmExporter(){
+  try { await chargerXlsx(); } catch (e) { return showToast(e.message); }
+  const lib = {SAP: 'SAP', SR: 'Secours routier', DIV: 'Opérations diverses', GEN: 'Générateur'};
+  const L = Object.values(data.rmsg || {}).filter(Boolean).sort((a, b) => (a.t || 0) - (b.t || 0));
+  const t = [['Date', 'Type', 'N°', 'N° CODIS', 'Auteur', 'Message']].concat(L.map(m => [m.date ? new Date(m.date) : new Date(m.t), lib[m.type] || m.type, m.num || '', m.codis || '', agentById(m.par) ? agentName(agentById(m.par)) : '', m.texte]));
+  const w = XLSX.utils.aoa_to_sheet(t, {cellDates: true, dateNF: 'dd/mm/yyyy hh:mm'}); w['!cols'] = [{wch: 17}, {wch: 18}, {wch: 6}, {wch: 12}, {wch: 22}, {wch: 120}];
+  const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, w, 'Messages radio'); XLSX.writeFile(wb, `Messages_radio_${todayISO()}.xlsx`);
+}
+// une actualisation en arrière-plan ne doit pas refermer l'outil ouvert (saisie en cours)
+let rafrEnCours = false;
+const _refreshState44 = refreshState;
+refreshState = async function(){ rafrEnCours = true; try { return await _refreshState44.apply(this, arguments); } finally { rafrEnCours = false; } };
+const _renderOutils44 = renderOutils;
+renderOutils = function(){ const pg = $('ot-page'); if (rafrEnCours && pg && !pg.classList.contains('hidden') && pg.innerHTML.trim()) { if (pg.querySelector('#rm-corps') && rmOng === 'hist') rmHist(); return; } _renderOutils44(); };
 
 // ==================== DÉMARRAGE ====================
 boot();
