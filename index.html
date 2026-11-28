@@ -180,7 +180,7 @@ h1,h2,h3,.font-head{font-family:Oswald,sans-serif;letter-spacing:.3px}
 .rm-it{display:flex;align-items:flex-start;gap:8px;padding:5px 0;font-size:14px;line-height:1.5}.rm-it>input[type=checkbox]{width:19px;height:19px;margin-top:2px;flex:none;accent-color:var(--rouge)}
 .rm-it .lb{flex:1}.rm-it input.rf{display:inline-block;border:0;border-bottom:1.5px dotted #9aa3b5;background:transparent;padding:0 3px;font:inherit;color:var(--ink);min-width:70px;width:9em;max-width:100%}.rm-it input.rf.n{width:3.2em;min-width:0;text-align:center}
 .rm-it input.rf:focus{outline:none;border-bottom-color:var(--rouge);background:#fff8f0}
-.rm-sub{margin-left:27px}.rm-h{font-weight:700;font-size:13.5px;margin:10px 0 2px;color:var(--ink)}.rm-note{font-size:12.5px;font-style:italic;color:#6b7387;margin:6px 0}
+.rm-sub{margin-left:27px}.rm-moy>div{display:grid;grid-template-columns:1fr 1fr;column-gap:10px}.rm-h{font-weight:700;font-size:13.5px;margin:10px 0 2px;color:var(--ink)}.rm-note{font-size:12.5px;font-style:italic;color:#6b7387;margin:6px 0}
 .rm-bil{display:flex;flex-wrap:wrap;gap:8px}.rm-bil label{display:flex;align-items:center;gap:6px;border:1px solid var(--bord);border-radius:10px;padding:6px 10px;font-weight:600;font-size:13.5px;background:#f6f7f9}.rm-bil input{width:3.4em;text-align:center}
 .rm-prev{white-space:pre-wrap;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:13.5px;line-height:1.55;background:#10161f;color:#e9eef5;border-radius:14px;padding:14px 16px;min-height:120px}
 .rm-act{padding:12px 0 0;display:flex;gap:8px;flex-wrap:wrap}
@@ -6326,57 +6326,118 @@ function agCompTds(a){
 }
 
 // ==================== MESSAGES RADIO : MESSAGES TYPES + HISTORIQUE ====================
-// Champs : {texte} = zone de saisie, {#texte} = nombre. Une ligne « # » = intertitre, « = » = champ sans case, « ! » = remarque.
-const RM_DEM_COMMUN = (l) => l.map(x => [x[0], x[1] + (x[2] === false ? '' : ' (raison : {raison})')]);
+// Messages types : chaque ligne a un libellé (formulaire) et une sortie (phrase du message radio).
+// l : libellé, {x} = zone de texte, {#x} = nombre ; o : texte ou fonction (v = valeurs saisies, e = sous-éléments cochés) ;
+// s : phrase autonome (sinon fragment ajouté à la phrase de la section) ; lib : champ sans case ; h : intertitre ; n : remarque.
+const rmL = a => { a = a.filter(Boolean); return a.length < 2 ? (a[0] || '') : a.slice(0, -1).join(', ') + ' et ' + a[a.length - 1]; };
+const rmUn = (n, m, f) => (!n || +n === 1) ? (f ? 'une ' : 'un ') + m : n + ' ' + m + (/[sx]$/.test(m) ? '' : 's');
+const RM_SERVICES = [{i: 'gend', l: 'Gendarmerie', o: 'la gendarmerie'}, {i: 'police', l: 'Police', o: 'la police'}, {i: 'maire', l: 'Maire', o: 'le maire'}, {i: 'elu', l: 'Élu d’astreinte', o: 'l’élu d’astreinte'},
+  {i: 'vq', l: 'Veille qualifiée', o: 'la veille qualifiée'}, {i: 'enedis', l: 'Enedis', o: 'Enedis'}, {i: 'grdf', l: 'GRDF', o: 'GRDF'}, {i: 'samu', l: 'SAMU 33', o: 'le SAMU 33'},
+  {i: 'smur', l: 'SMUR Langon', o: 'le SMUR Langon'}, {i: 'dragon', l: 'Dragon 33', o: 'Dragon 33'}, {i: 'aut', l: 'autre : {précision}', o: v => v[0]}];
+const RM_DEM_TETE = [{i: 'conf', l: 'je confirme les moyens engagés', o: 'Je confirme les moyens engagés.', s: true}, {i: 'suff', l: 'secours suffisants', o: 'Secours suffisants.', s: true}, {h: 'Agrès et services demandés'}];
+const rmPour = (txt) => v => txt + (v[0] ? ' pour ' + v[0] : '');
 const RM_TYPES = {
-  SAP: {titre: 'A 8.1 — Message de compte rendu type SAP', court: 'compte rendu type SAP', bilan: true,
-    suis: [['adr', 'changement d’adresse : {adresse}']],
-    vois: [['pers', '{#nb} personne(s), code victime {code}'], ['nomb', '{#nb} (nombreuses) victimes'], ['bmm', 'blessé / malade / malaise : {précision}'],
-      ['psy', 'personne nécessitant des soins psychiatriques, pas de consentement de transport possible (S.P. à la demande d’un représentant de l’État : dangereuse pour elle-même)'],
-      ['ebr', 'personne présentant les signes d’un état d’ébriété'], ['rue', 'personne à la rue (indigente)'],
-      ['ssv', 'opération sans victime :', [['ssv1', 'après reconnaissance, aucune intervention de notre part : pas de blessé, personne partie, etc.'], ['ssv2', 'après reconnaissance, fausse alerte (pas de témoin ou de requérant à l’adresse indiquée)']]],
-      ['aut', 'autres : {précision}'], ['!', 'La classification en « Carence » ou en « Urgence » de l’opération ne doit pas faire l’objet d’échanges radio avec le SAMU.']],
-    fais: [['rec', 'reconnaissance'], ['bal', 'balisage et protection'], ['bil', 'bilan'], ['rcp', 'RCP'], ['cond', 'conditionnement de la ou des victimes'], ['hbco', 'mesure d’HbCO'],
-      ['evr', 'évacuation après régulation SAMU par : {moyen}'], ['reo', 'après régulation SAMU, réorientation de l’hôpital {hôpital} vers l’hôpital {hôpital} (raison : {raison si connue})'],
-      ['evh', 'évacuation vers l’hôpital {hôpital}, hors département ou en dehors du secteur habituel'], ['ld', 'opération de longue durée'], ['vv', 'victime évacuée sans surveillance de la voie veineuse'],
-      ['dz', 'transport sur DZ située : {lieu}'], ['smh', 'jonction SMUR / hélico'], ['sauv', 'sauvetage / mise en sécurité'], ['=rai', 'raison : {raison}'], ['aut', 'autres : {précision}']],
-    demande: RM_DEM_COMMUN([['vsav', 'VSAV', false], ['ssu', '« équipe SMUR effectuée sur réseau SSU »', false], ['ep', 'EP 4 / 6', false], ['des', 'DÉSIN / SR / BPROT', false], ['sso', 'SSO niveau {#n} / ATSSO', false],
-      ['op', 'OP3SM / OPINF / OPMED', false], ['cdg', 'CDG / CDC', false], ['div', 'DIV 2 / 3 + lot(s) : {lots}', false], ['fo', 'forces de l’ordre'], ['com', 'autorités communales'], ['voi', 'service de la voirie'], ['novi', 'moyens du NOVI', false], ['aut', 'autre : {précision}', false]]),
-    moyens: [['=smur', 'SMUR + provenance : {provenance}'], ['=serv', 'services et autorités : {services}']],
-    fin: [['tne', 'après régulation SAMU, TNE, code victime : {code}'], ['dcd', 'victime DCD : nationalité {nationalité}, cause {cause}'], ['arr', 'arrivée au CH {hôpital} à {heure}'], ['att', 'VSAV en attente d’admission au CH {hôpital} ({motif}) depuis 30 minutes']]},
+  SAP: {titre: 'A 8.1 — Message de compte rendu type SAP', court: 'de compte rendu type SAP', bilan: true,
+    suis: [{i: 'adr', l: 'changement d’adresse : {adresse}', o: v => v[0]}],
+    vois: [{i: 'pers', l: '{#nb} personne(s), code victime {code}', o: v => rmUn(v[0], 'personne', 1) + (v[1] ? ', code victime ' + v[1] : '')},
+      {i: 'nomb', l: 'de nombreuses victimes ({#nb})', o: v => 'de nombreuses victimes' + (v[0] ? ' (' + v[0] + ')' : '')},
+      {i: 'bl', l: 'une personne blessée : {précision}', o: v => 'une personne blessée' + (v[0] ? ' (' + v[0] + ')' : '')},
+      {i: 'ma', l: 'une personne malade : {précision}', o: v => 'une personne malade' + (v[0] ? ' (' + v[0] + ')' : '')},
+      {i: 'mal', l: 'une personne ayant fait un malaise : {précision}', o: v => 'une personne ayant fait un malaise' + (v[0] ? ' (' + v[0] + ')' : '')},
+      {i: 'psy', l: 'personne nécessitant des soins psychiatriques, pas de consentement de transport possible (S.P. à la demande d’un représentant de l’État : dangereuse pour elle-même)', o: 'une personne nécessitant des soins psychiatriques, sans consentement au transport possible (soins à la demande d’un représentant de l’État : personne dangereuse pour elle-même)'},
+      {i: 'ebr', l: 'personne présentant les signes d’un état d’ébriété', o: 'une personne présentant les signes d’un état d’ébriété'},
+      {i: 'rue', l: 'personne à la rue (indigente)', o: 'une personne à la rue (indigente)'},
+      {i: 'ssv', l: 'opération sans victime :', s: true, o: (v, e) => 'Opération sans victime' + (e.length ? ' : ' + e.join(' ; ') : '') + '.', sub: [
+        {i: 'ssv1', l: 'après reconnaissance, aucune intervention de notre part : pas de blessé, personne partie, etc.', o: 'après reconnaissance, aucune intervention de notre part (pas de blessé, personne partie)'},
+        {i: 'ssv2', l: 'après reconnaissance, fausse alerte (pas de témoin ou de requérant à l’adresse indiquée)', o: 'après reconnaissance, fausse alerte (pas de témoin ni de requérant à l’adresse indiquée)'}]},
+      {i: 'aut', l: 'autres : {précision}', o: v => v[0]},
+      {n: 'La classification en « Carence » ou en « Urgence » de l’opération ne doit pas faire l’objet d’échanges radio avec le SAMU.'}],
+    fais: [{i: 'rec', l: 'reconnaissance', o: 'à la reconnaissance'}, {i: 'bal', l: 'balisage et protection', o: 'au balisage de protection'}, {i: 'bil', l: 'bilan', o: 'au bilan'}, {i: 'rcp', l: 'RCP', o: 'à une RCP'},
+      {i: 'cond', l: 'conditionnement de la ou des victimes', o: 'au conditionnement de la ou des victimes'}, {i: 'hbco', l: 'mesure d’HbCO', o: 'à une mesure d’HbCO'},
+      {i: 'smh', l: 'jonction SMUR / hélico', o: 'à une jonction SMUR / hélico'}, {i: 'sauv', l: 'sauvetage / mise en sécurité', o: 'au sauvetage avec mise en sécurité'},
+      {i: 'evr', l: 'évacuation après régulation SAMU par : {moyen}', s: true, o: v => 'Après régulation SAMU, évacuation de la victime' + (v[0] ? ' par ' + v[0] : '') + '.'},
+      {i: 'reo', l: 'après régulation SAMU, réorientation de l’hôpital {hôpital} vers l’hôpital {hôpital} (raison : {raison si connue})', s: true, o: v => 'Après régulation SAMU, réorientation' + (v[0] ? ' de l’hôpital ' + v[0] : '') + (v[1] ? ' vers l’hôpital ' + v[1] : '') + (v[2] ? ', raison : ' + v[2] : '') + '.'},
+      {i: 'evh', l: 'évacuation vers l’hôpital {hôpital}, hors département ou en dehors du secteur habituel', s: true, o: v => 'Évacuation vers l’hôpital ' + (v[0] || '') + ', hors département ou en dehors du secteur habituel.'},
+      {i: 'ld', l: 'opération de longue durée', s: true, o: 'Opération de longue durée.'}, {i: 'vv', l: 'victime évacuée sans surveillance de la voie veineuse', s: true, o: 'Victime évacuée sans surveillance de la voie veineuse.'},
+      {i: 'dz', l: 'transport sur DZ située : {lieu}', s: true, o: v => 'Transport sur DZ' + (v[0] ? ' située ' + v[0] : '') + '.'},
+      {i: 'rai', lib: true, l: 'raison : {raison}', s: true, o: v => 'Raison : ' + v[0] + '.'}, {i: 'aut', l: 'autres : {précision}', s: true, o: v => v[0] + '.'}],
+    demande: RM_DEM_TETE.concat([{i: 'vsav', l: 'VSAV', o: 'un VSAV'}, {i: 'ssu', l: '« équipe SMUR effectuée sur réseau SSU »', s: true, o: 'Équipe SMUR effectuée sur réseau SSU.'}, {i: 'ep', l: 'EP 4 / 6', o: 'un EP 4/6'},
+      {i: 'des', l: 'DÉSIN / SR / BPROT', o: 'un DÉSIN / SR / BPROT'}, {i: 'sso', l: 'SSO niveau {#n} / ATSSO', o: v => 'un SSO' + (v[0] ? ' niveau ' + v[0] : '') + ' / ATSSO'}, {i: 'op', l: 'OP3SM / OPINF / OPMED', o: 'un OP3SM / OPINF / OPMED'},
+      {i: 'cdg', l: 'CDG / CDC', o: 'un CDG / CDC'}, {i: 'div', l: 'DIV 2 / 3 + lot(s) : {lots}', o: v => 'un DIV 2/3' + (v[0] ? ' avec lot(s) ' + v[0] : '')},
+      {i: 'fo', l: 'forces de l’ordre (raison : {raison})', o: rmPour('les forces de l’ordre')}, {i: 'com', l: 'autorités communales (raison : {raison})', o: rmPour('les autorités communales')},
+      {i: 'voi', l: 'service de la voirie (raison : {raison})', o: rmPour('le service de la voirie')}, {i: 'novi', l: 'moyens du NOVI', o: 'les moyens du NOVI'}, {i: 'aut', l: 'autre : {précision}', o: v => v[0]}]),
+    fin: [{i: 'tne', l: 'après régulation SAMU, TNE, code victime : {code}', s: true, o: v => 'Après régulation SAMU, TNE' + (v[0] ? ', code victime ' + v[0] : '') + '.'},
+      {i: 'dcd', l: 'victime DCD : nationalité {nationalité}, cause {cause}', s: true, o: v => 'Victime décédée' + (v[0] ? ', nationalité ' + v[0] : '') + (v[1] ? ', cause du décès : ' + v[1] : '') + '.'},
+      {i: 'arr', l: 'arrivée au CH {hôpital} à {heure}', s: true, o: v => 'Arrivée au CH ' + (v[0] || '') + (v[1] ? ' à ' + v[1] : '') + '.'},
+      {i: 'att', l: 'VSAV en attente d’admission au CH {hôpital} ({motif}) depuis 30 minutes', s: true, o: v => 'VSAV en attente d’admission au CH ' + (v[0] || '') + ' depuis 30 minutes' + (v[1] ? ', motif : ' + v[1] : '') + '.'}]},
   SR: {titre: 'A 8.2 — Message type secours routier', court: 'type secours routier', bilan: true,
-    suis: [['adr', 'changement d’adresse : {adresse}'], ['=com', 'commune : {commune}'], ['=ld', 'lieu-dit : {lieu-dit}'],
-      ['aut', 'autoroute / RD {n°}, sens {sens}, PR {PR}'], ['ech', 'entre l’échangeur {échangeur} et l’échangeur {échangeur}'], ['roc', 'rocade de Bordeaux, sens {intérieur / extérieur}, entre l’échangeur {échangeur} et l’échangeur {échangeur}']],
-    vois: [['acc', 'un accident de la circulation mettant en cause :', [['pi', '{#nb} piéton(s) {précision}'], ['2r', '{#nb} 2 roues ({moto, vélo})'], ['vl', '{#nb} VL ({carburation si besoin (feu)})'],
-        ['pl', '{#nb} PL (chargement : {nature, volume, état (solide, liquide, gaz)})'], ['tram', '{#nb} tram, ligne {ligne}'], ['train', '{#nb} train, ligne {ligne}'], ['bus', '{#nb} bus ({scolaire, tourisme, nom de société})']]],
-      ['=cd', 'code danger : {code}'], ['=cm', 'code matière : {code}'], ['fui', 'présence de fuite de {produit}, phase {liquide / gaz…}'], ['loc', 'localisation de la fuite : {localisation}'], ['autv', 'autre : {précision}'],
-      ['#', 'État de la circulation'], ['cir', 'circulation :', [['ral', 'ralentie'], ['dev', 'déviée'], ['cou', 'coupée'], ['alt', 'alternée'], ['sens', 'dans le sens {sens}'], ['voies', 'sur {#n} voies']]]],
-    fais: [['bal', 'balisage protection'], ['rec', 'reconnaissance'], ['bil', 'bilan'], ['des', 'désincarcération'], ['cond', 'conditionnement de la ou des victimes'], ['prv', 'PRV (point de rassemblement des victimes), emplacement : {emplacement}'],
-      ['prot', 'protection au moyen de {moyen}'], ['ldv', 'LDV en protection'], ['ext', 'extinction au moyen de {lance à mousse / LDV…}'], ['tap', 'tapis mousse'], ['end', 'endiguer l’écoulement au moyen de {moyen}'],
-      ['exp', 'relevé explosimétrie'], ['ld', 'opération de longue durée'], ['evh', 'évacuation vers le CH {hôpital}'], ['dz', 'transport sur DZ située {lieu}'], ['smh', 'jonction SMUR / hélico'], ['pe', 'point d’engagement des renforts : {lieu}']],
-    demande: RM_DEM_COMMUN([['vsav', 'VSAV', false], ['ssu', '« équipe SMUR effectuée sur réseau SSU »', false], ['ep', 'EP 4 / 6', false], ['des', 'DÉSIN / SR / BPROT / FSR / CESR', false], ['sso', 'SSO niveau {#n} / ATSSO', false],
-      ['op', 'OP3SM / OPINF / OPMED', false], ['cdg', 'CDG / CDC', false], ['div', 'DIV 2 / 3 + lot(s) : {lots}', false], ['fo', 'forces de l’ordre'], ['com', 'autorité communale'], ['voi', 'service de la voirie'], ['novi', 'moyens NOVI', false], ['aut', 'autres : {précision}', false]]),
-    moyens: [['=smur', 'SMUR (provenance) : {provenance}'], ['=serv', 'services et autorités : {services}']],
-    fin: [['cos', 'je prends l’appellation « COS {nom} » (à partir du niveau 1 de commandement)']]},
+    suis: [{i: 'adr', l: 'changement d’adresse : {adresse}', o: v => v[0]}, {i: 'com', lib: true, l: 'commune : {commune}', o: v => 'commune de ' + v[0]}, {i: 'ld', lib: true, l: 'lieu-dit : {lieu-dit}', o: v => 'lieu-dit ' + v[0]},
+      {i: 'aut', l: 'autoroute / RD {n°}, sens {sens}, PR {PR}', o: v => 'sur ' + (v[0] ? (/^\d/.test(v[0]) ? 'la RD ' + v[0] : /^A\s?\d/i.test(v[0]) ? 'l’' + v[0] : /^(RD|RN|D|N)\s?\d/i.test(v[0]) ? 'la ' + v[0] : v[0]) : 'l’axe') + (v[1] ? ' sens ' + v[1] : '') + (v[2] ? ' au PR ' + v[2] : '')},
+      {i: 'ech', l: 'entre l’échangeur {échangeur} et l’échangeur {échangeur}', o: v => 'entre l’échangeur ' + (v[0] || '') + ' et l’échangeur ' + (v[1] || '')},
+      {i: 'roc', l: 'rocade de Bordeaux, sens {intérieur / extérieur}, entre l’échangeur {échangeur} et l’échangeur {échangeur}', o: v => 'sur la rocade de Bordeaux' + (v[0] ? ' sens ' + v[0] : '') + (v[1] || v[2] ? ', entre l’échangeur ' + (v[1] || '') + ' et l’échangeur ' + (v[2] || '') : '')}],
+    vois: [{i: 'acc', l: 'accident de la circulation mettant en cause :', o: (v, e) => 'un accident de la circulation' + (e.length ? ' impliquant ' + rmL(e) : ''), sub: [
+        {i: 'pi', l: '{#nb} piéton(s) {précision}', o: v => rmUn(v[0], 'piéton') + (v[1] ? ' (' + v[1] + ')' : '')}, {i: '2r', l: '{#nb} 2 roues ({moto, vélo})', o: v => rmUn(v[0], 'deux-roues') + (v[1] ? ' (' + v[1] + ')' : '')},
+        {i: 'vl', l: '{#nb} VL ({carburation si besoin (feu)})', o: v => rmUn(v[0], 'VL', 0).replace(/VLs$/, 'VL') + (v[1] ? ' (' + v[1] + ')' : '')},
+        {i: 'pl', l: '{#nb} PL (chargement : {nature, volume, état (solide, liquide, gaz)})', o: v => rmUn(v[0], 'PL', 0).replace(/PLs$/, 'PL') + (v[1] ? ' chargé de ' + v[1] : '')},
+        {i: 'tram', l: '{#nb} tram, ligne {ligne}', o: v => rmUn(v[0], 'tram') + (v[1] ? ' de la ligne ' + v[1] : '')}, {i: 'train', l: '{#nb} train, ligne {ligne}', o: v => rmUn(v[0], 'train') + (v[1] ? ' de la ligne ' + v[1] : '')},
+        {i: 'bus', l: '{#nb} bus ({scolaire, tourisme, nom de société})', o: v => rmUn(v[0], 'bus') + (v[1] ? ' (' + v[1] + ')' : '')}]},
+      {i: 'fui', l: 'présence de fuite de {produit}, phase {liquide / gaz…}', o: v => 'une fuite' + (v[0] ? ' de ' + v[0] : '') + (v[1] ? ' en phase ' + v[1] : '')},
+      {i: 'cd', lib: true, l: 'code danger : {code} — code matière : {code}', s: true, o: v => [v[0] ? 'code danger ' + v[0] : '', v[1] ? 'code matière ' + v[1] : ''].filter(Boolean).join(', ').replace(/^c/, 'C') + '.'},
+      {i: 'loc', l: 'localisation de la fuite : {localisation}', s: true, o: v => 'Fuite localisée ' + (v[0] || '') + '.'}, {i: 'autv', l: 'autre : {précision}', o: v => v[0]},
+      {h: 'État de la circulation'}, {i: 'cir', l: 'circulation :', s: true, o: (v, e) => 'Circulation ' + (e.join(', ') || 'perturbée') + '.', sub: [
+        {i: 'ral', l: 'ralentie', o: 'ralentie'}, {i: 'dev', l: 'déviée', o: 'déviée'}, {i: 'cou', l: 'coupée', o: 'coupée'}, {i: 'alt', l: 'alternée', o: 'alternée'},
+        {i: 'sens', l: 'dans le sens {sens}', o: v => 'dans le sens ' + (v[0] || '')}, {i: 'voies', l: 'sur {#n} voies', o: v => 'sur ' + rmUn(v[0], 'voie', 1)}]}],
+    fais: [{i: 'bal', l: 'balisage protection', o: 'au balisage de protection'}, {i: 'rec', l: 'reconnaissance', o: 'à la reconnaissance'}, {i: 'bil', l: 'bilan', o: 'au bilan'}, {i: 'des', l: 'désincarcération', o: 'à la désincarcération'},
+      {i: 'cond', l: 'conditionnement de la ou des victimes', o: 'au conditionnement de la ou des victimes'}, {i: 'prot', l: 'protection au moyen de {moyen}', o: v => 'à la protection' + (v[0] ? ' au moyen de ' + v[0] : '')},
+      {i: 'ldv', l: 'LDV en protection', o: 'à l’établissement d’une LDV en protection'}, {i: 'ext', l: 'extinction au moyen de {lance à mousse / LDV…}', o: v => 'à l’extinction' + (v[0] ? ' au moyen de ' + v[0] : '')},
+      {i: 'tap', l: 'tapis mousse', o: 'à la mise en place d’un tapis de mousse'}, {i: 'end', l: 'endiguer l’écoulement au moyen de {moyen}', o: v => 'à l’endiguement de l’écoulement' + (v[0] ? ' au moyen de ' + v[0] : '')},
+      {i: 'exp', l: 'relevé explosimétrie', o: 'à un relevé d’explosimétrie'}, {i: 'smh', l: 'jonction SMUR / hélico', o: 'à une jonction SMUR / hélico'},
+      {i: 'prv', l: 'PRV (point de rassemblement des victimes), emplacement : {emplacement}', s: true, o: v => 'Mise en place d’un PRV' + (v[0] ? ' : ' + v[0] : '') + '.'},
+      {i: 'ld', l: 'opération de longue durée', s: true, o: 'Opération de longue durée.'}, {i: 'evh', l: 'évacuation vers le CH {hôpital}', s: true, o: v => 'Évacuation vers le CH ' + (v[0] || '') + '.'},
+      {i: 'dz', l: 'transport sur DZ située {lieu}', s: true, o: v => 'Transport sur DZ' + (v[0] ? ' située ' + v[0] : '') + '.'}, {i: 'pe', l: 'point d’engagement des renforts : {lieu}', s: true, o: v => 'Point d’engagement des renforts : ' + (v[0] || '') + '.'}],
+    demande: RM_DEM_TETE.concat([{i: 'vsav', l: 'VSAV', o: 'un VSAV'}, {i: 'ssu', l: '« équipe SMUR effectuée sur réseau SSU »', s: true, o: 'Équipe SMUR effectuée sur réseau SSU.'}, {i: 'ep', l: 'EP 4 / 6', o: 'un EP 4/6'},
+      {i: 'des', l: 'DÉSIN / SR / BPROT / FSR / CESR', o: 'un DÉSIN / SR / BPROT / FSR / CESR'}, {i: 'sso', l: 'SSO niveau {#n} / ATSSO', o: v => 'un SSO' + (v[0] ? ' niveau ' + v[0] : '') + ' / ATSSO'},
+      {i: 'op', l: 'OP3SM / OPINF / OPMED', o: 'un OP3SM / OPINF / OPMED'}, {i: 'cdg', l: 'CDG / CDC', o: 'un CDG / CDC'}, {i: 'div', l: 'DIV 2 / 3 + lot(s) : {lots}', o: v => 'un DIV 2/3' + (v[0] ? ' avec lot(s) ' + v[0] : '')},
+      {i: 'fo', l: 'forces de l’ordre (raison : {raison})', o: rmPour('les forces de l’ordre')}, {i: 'com', l: 'autorité communale (raison : {raison})', o: rmPour('l’autorité communale')},
+      {i: 'voi', l: 'service de la voirie (raison : {raison})', o: rmPour('le service de la voirie')}, {i: 'novi', l: 'moyens NOVI', o: 'les moyens NOVI'}, {i: 'aut', l: 'autres : {précision}', o: v => v[0]}]),
+    fin: [{i: 'cos', l: 'je prends l’appellation « COS {nom} » (à partir du niveau 1 de commandement)', s: true, o: v => 'Je prends l’appellation « COS ' + (v[0] || '') + ' ».'}]},
   DIV: {titre: 'A 8.5 — Message type opérations diverses', court: 'type opérations diverses', bilan: false,
-    suis: [['adr', 'changement d’adresse : {adresse}']],
-    vois: [['mf', 'mauvais fonctionnement de {quoi}'], ['cc', 'court-circuit intérieur / extérieur : {précision}'],
-      ['#', 'Chute d’objets'], ['cab', 'câble HTA / HTB / MT / BT / téléphonique tombé / autres : {précision}'], ['obj', 'objet menaçant de tomber / risque d’effondrement sur {VP / bâtiment} : {précision}'],
-      ['#', 'Animal'], ['ani', 'un animal {type (chien, chat, hyménoptère…)}', [['ab', 'blessé'], ['ap', 'perché'], ['ac', 'coincé'], ['ad', 'animal dangereux / nuisible : {précision}']]],
-      ['#', 'Fuite d’eau / local inondé'], ['=ou', 'où : {lieu}'], ['=du', 'due à : {cause}'], ['=ent', 'ayant entraîné : {conséquences}'], ['=sv', 'surfaces et volumes concernés : {surfaces, volumes}'],
-      ['#', 'Relevage de personnes — PRPA'], ['=circ', 'circonstances : {circonstances}'], ['=code', 'code : {code}'], ['#', 'Autres'], ['autv', '{précision}']],
-    fais: [['rec', 'reconnaissance'], ['ms', 'mise en sécurité / sauvetage de {quoi}'], ['co', 'mesure de CO'], ['bal', 'balisage et protection'], ['van', 'fermeture de vanne / compteur (eau / électricité)'],
-      ['eta', 'étaiement de {quoi}'], ['bac', 'bâchage de {#m²} m² de toiture'], ['tro', 'tronçonnage de {quoi}'], ['snd', 'sauvetage, mise en sécurité, neutralisation, destruction'], ['epu', 'épuisement et/ou assèchement'],
-      ['rel', 'relevage de personnes'], ['op', 'ouverture de porte :', [['op1', 'la fermeture des accès est réalisée'], ['op2', 'locaux non refermés, garde des biens non assurée']]],
-      ['!', 'Police non nécessaire SLL, elle sera avisée avec communication de ces informations par le CTA-CODIS.'], ['=sit', 'situation rencontrée : {situation}'], ['=prop', 'adresse et nom du propriétaire ou du locataire : {adresse, nom}'],
-      ['asc', 'ascenseur :', [['asc1', 'coupure de la force motrice'], ['asc2', 'vérification des portes palières']]], ['autf', 'autre : {précision}']],
-    prevois: [['ld', 'opération de longue durée'], ['imp', 'impact sur les {#nb} résidents ({détail})'], ['int', 'interruption d’activité de {#j} jours ou chômage technique de {#nb} personnes'],
-      ['rel', 'pas de relogement ou relogement de {#nb} (par : {famille, mairie, autre})'], ['eff', 'risque d’effondrement de {quoi}']],
-    demande: RM_DEM_COMMUN([['vsav', 'VSAV après régulation SAMU', false], ['ep', 'EP 4 / 6', false], ['ech', 'ECH / ESP / BEA', false], ['cdg', 'CDG / CDC', false], ['sso', 'SSO niveau {#n} / ATSSO', false], ['at', 'AT3SM / OPINF / OPMED', false],
-      ['des', 'DÉSIN / SR / BPROT', false], ['div', 'DIV 2 / 3 + lot(s) : {lots}', false], ['vao', 'VAO', false], ['via', 'VIA', false], ['sd', 'référent SD / unité SD', false], ['fo', 'forces de l’ordre'], ['com', 'autorité communale'],
-      ['voi', 'service de la voirie'], ['eau', 'service des eaux'], ['gaz', 'service gaz et/ou électricité'], ['aut', 'autre : {précision}', false]]),
-    moyens: [['=serv', 'services et autorités : {services}']], fin: []}
+    suis: [{i: 'adr', l: 'changement d’adresse : {adresse}', o: v => v[0]}],
+    vois: [{i: 'mf', l: 'mauvais fonctionnement de {quoi}', o: v => 'un mauvais fonctionnement' + (v[0] ? ' de ' + v[0] : '')}, {i: 'cc', l: 'court-circuit {intérieur / extérieur, précision}', o: v => 'un court-circuit' + (v[0] ? ' ' + v[0] : '')},
+      {h: 'Chute d’objets'}, {i: 'cab', l: 'câble tombé : {HTA / HTB / MT / BT / téléphonique / autre}', o: v => 'un câble ' + (v[0] ? v[0] + ' ' : '') + 'tombé'},
+      {i: 'obj', l: 'objet menaçant de tomber / risque d’effondrement sur {VP / bâtiment} : {précision}', o: v => 'un objet menaçant de tomber avec risque d’effondrement' + (v[0] ? ' sur ' + v[0] : '') + (v[1] ? ' (' + v[1] + ')' : '')},
+      {h: 'Animal'}, {i: 'ani', l: 'animal : {type (chien, chat, hyménoptère…)}', o: (v, e) => 'un animal' + (v[0] ? ' (' + v[0] + ')' : '') + (e.length ? ' ' + rmL(e) : ''), sub: [
+        {i: 'ab', l: 'blessé', o: 'blessé'}, {i: 'ap', l: 'perché', o: 'perché'}, {i: 'ac', l: 'coincé', o: 'coincé'}, {i: 'ad', l: 'dangereux / nuisible : {précision}', o: v => 'dangereux ou nuisible' + (v[0] ? ' (' + v[0] + ')' : '')}]},
+      {h: 'Fuite d’eau / local inondé'}, {i: 'fe', l: 'fuite d’eau / local inondé', o: (v, e) => 'une fuite d’eau avec local inondé' + (e.length ? ' : ' + e.join(', ') : ''), sub: [
+        {i: 'ou', lib: true, l: 'où : {lieu}', o: v => v[0]}, {i: 'du', lib: true, l: 'due à : {cause}', o: v => 'due à ' + v[0]}, {i: 'ent', lib: true, l: 'ayant entraîné : {conséquences}', o: v => 'ayant entraîné ' + v[0]},
+        {i: 'sv', lib: true, l: 'surfaces et volumes concernés : {surfaces, volumes}', o: v => 'surfaces et volumes concernés : ' + v[0]}]},
+      {h: 'Relevage de personnes — PRPA'}, {i: 'prpa', l: 'personne à relever (PRPA)', o: (v, e) => 'une personne à relever' + (e.length ? ' (' + e.join(', ') + ')' : ''), sub: [
+        {i: 'circ', lib: true, l: 'circonstances : {circonstances}', o: v => v[0]}, {i: 'code', lib: true, l: 'code : {code}', o: v => 'code ' + v[0]}]},
+      {h: 'Autres'}, {i: 'autv', l: '{précision}', o: v => v[0]}],
+    fais: [{i: 'rec', l: 'reconnaissance', o: 'à la reconnaissance'}, {i: 'ms', l: 'mise en sécurité / sauvetage de {quoi}', o: v => 'à la mise en sécurité' + (v[0] ? ' de ' + v[0] : '')}, {i: 'co', l: 'mesure de CO', o: 'à une mesure de CO'},
+      {i: 'bal', l: 'balisage et protection', o: 'au balisage de protection'}, {i: 'van', l: 'fermeture de vanne / compteur (eau / électricité)', o: 'à la fermeture de la vanne ou du compteur (eau / électricité)'},
+      {i: 'eta', l: 'étaiement de {quoi}', o: v => 'à l’étaiement' + (v[0] ? ' de ' + v[0] : '')}, {i: 'bac', l: 'bâchage de {#m²} m² de toiture', o: v => 'au bâchage' + (v[0] ? ' de ' + v[0] + ' m²' : '') + ' de toiture'},
+      {i: 'tro', l: 'tronçonnage de {quoi}', o: v => 'au tronçonnage' + (v[0] ? ' de ' + v[0] : '')}, {i: 'snd', l: 'sauvetage, mise en sécurité, neutralisation, destruction', o: 'au sauvetage, à la mise en sécurité, à la neutralisation ou à la destruction'},
+      {i: 'epu', l: 'épuisement et/ou assèchement', o: 'à l’épuisement / assèchement'}, {i: 'rel', l: 'relevage de personnes', o: 'au relevage de la personne'},
+      {i: 'op', l: 'ouverture de porte :', s: true, o: (v, e) => 'Ouverture de porte réalisée' + (e.length ? ' : ' + e.join(' ; ') : '') + '.', sub: [
+        {i: 'op1', l: 'la fermeture des accès est réalisée', o: 'fermeture des accès réalisée'}, {i: 'op2', l: 'locaux non refermés, garde des biens non assurée', o: 'locaux non refermés, garde des biens non assurée'}]},
+      {n: 'Police non nécessaire SLL, elle sera avisée avec communication de ces informations par le CTA-CODIS.'},
+      {i: 'sit', lib: true, l: 'situation rencontrée : {situation}', s: true, o: v => 'Situation rencontrée : ' + v[0] + '.'}, {i: 'prop', lib: true, l: 'adresse et nom du propriétaire ou du locataire : {adresse, nom}', s: true, o: v => 'Propriétaire ou locataire : ' + v[0] + '.'},
+      {i: 'asc', l: 'ascenseur :', s: true, o: (v, e) => 'Ascenseur : ' + (rmL(e) || 'intervention réalisée') + '.', sub: [{i: 'asc1', l: 'coupure de la force motrice', o: 'coupure de la force motrice'}, {i: 'asc2', l: 'vérification des portes palières', o: 'vérification des portes palières'}]},
+      {i: 'autf', l: 'autre : {précision}', s: true, o: v => v[0] + '.'}],
+    prevois: [{i: 'ld', l: 'opération de longue durée', o: 'une opération de longue durée'}, {i: 'imp', l: 'impact sur les {#nb} résidents ({détail})', o: v => 'un impact sur ' + (v[0] ? v[0] + ' résidents' : 'les résidents') + (v[1] ? ' (' + v[1] + ')' : '')},
+      {i: 'int', l: 'interruption d’activité de {#j} jours ou chômage technique de {#nb} personnes', o: v => 'une interruption d’activité' + (v[0] ? ' de ' + v[0] + ' jours' : '') + (v[1] ? ' et un chômage technique de ' + v[1] + ' personnes' : '')},
+      {i: 'rel', l: 'relogement de {#nb} personnes (par : {famille, mairie, autre}) — laisser vide si pas de relogement', o: v => v[0] ? 'le relogement de ' + v[0] + ' personnes' + (v[1] ? ' par ' + v[1] : '') : 'pas de relogement'},
+      {i: 'eff', l: 'risque d’effondrement de {quoi}', o: v => 'un risque d’effondrement' + (v[0] ? ' de ' + v[0] : '')}],
+    demande: RM_DEM_TETE.concat([{i: 'vsav', l: 'VSAV après régulation SAMU', o: 'un VSAV après régulation SAMU'}, {i: 'ep', l: 'EP 4 / 6', o: 'un EP 4/6'}, {i: 'ech', l: 'ECH / ESP / BEA', o: 'un ECH / ESP / BEA'}, {i: 'cdg', l: 'CDG / CDC', o: 'un CDG / CDC'},
+      {i: 'sso', l: 'SSO niveau {#n} / ATSSO', o: v => 'un SSO' + (v[0] ? ' niveau ' + v[0] : '') + ' / ATSSO'}, {i: 'at', l: 'AT3SM / OPINF / OPMED', o: 'un AT3SM / OPINF / OPMED'}, {i: 'des', l: 'DÉSIN / SR / BPROT', o: 'un DÉSIN / SR / BPROT'},
+      {i: 'div', l: 'DIV 2 / 3 + lot(s) : {lots}', o: v => 'un DIV 2/3' + (v[0] ? ' avec lot(s) ' + v[0] : '')}, {i: 'vao', l: 'VAO', o: 'un VAO'}, {i: 'via', l: 'VIA', o: 'un VIA'}, {i: 'sd', l: 'référent SD / unité SD', o: 'un référent SD / une unité SD'},
+      {i: 'fo', l: 'forces de l’ordre (raison : {raison})', o: rmPour('les forces de l’ordre')}, {i: 'com', l: 'autorité communale (raison : {raison})', o: rmPour('l’autorité communale')},
+      {i: 'voi', l: 'service de la voirie (raison : {raison})', o: rmPour('le service de la voirie')}, {i: 'eau', l: 'service des eaux (raison : {raison})', o: rmPour('le service des eaux')},
+      {i: 'gaz', l: 'service gaz et/ou électricité (raison : {raison})', o: rmPour('le service gaz et/ou électricité')}, {i: 'aut', l: 'autre : {précision}', o: v => v[0]}]),
+    fin: []}
 };
+Object.values(RM_TYPES).forEach(T => { T.moyens = RM_SERVICES; });
 const RM_BILAN = [['conc', 'concernées'], ['vict', 'victimes'], ['impl', 'impliqués'], ['bl', 'blessés légers'], ['bg', 'blessés graves'], ['dcd', 'DCD']];
 let rmOng = 'gen', rmType = 'SAP', rmV = {}, rmEditId = null, rmHistF = '', rmHistQ = '', rmHistMoi = false, rmOuvert = {};
 function rmNouveau(){ const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); rmV = {_date: d.toISOString().slice(0, 16)}; rmEditId = null; }
@@ -6393,14 +6454,13 @@ function rmChamps(id, lbl){
     return `<input class="rf ${num ? 'n' : ''}" ${num ? 'inputmode="numeric"' : ''} data-k="${k}" data-ck="${id}" placeholder="${p}" value="${esc(rmV[k] || '')}" oninput="rmSaisie(this)" onclick="event.stopPropagation()">`; });
 }
 function rmLigne(sec, it, parent){
-  const [id0, lbl, sub] = it;
-  if (id0 === '#') return `<div class="rm-h">${esc(lbl)}</div>`;
-  if (id0 === '!') return `<div class="rm-note">${esc(lbl)}</div>`;
-  const libre = id0.startsWith('='), id = sec + '.' + (parent ? parent + '.' : '') + id0.replace('=', '');
-  const ck = libre ? '' : `<input type="checkbox" data-c="${id}" ${rmV[id] ? 'checked' : ''} onchange="rmCoche(this)">`;
-  return `<label class="rm-it">${ck}<span class="lb">${rmChamps(id, lbl)}</span></label>` + (sub ? `<div class="rm-sub">${sub.map(x => rmLigne(sec, x, id0)).join('')}</div>` : '');
+  if (it.h) return `<div class="rm-h">${esc(it.h)}</div>`;
+  if (it.n) return `<div class="rm-note">${esc(it.n)}</div>`;
+  const id = sec + '.' + (parent ? parent + '.' : '') + it.i;
+  const ck = it.lib ? '' : `<input type="checkbox" data-c="${id}" ${rmV[id] ? 'checked' : ''} onchange="rmCoche(this)">`;
+  return `<label class="rm-it">${ck}<span class="lb">${rmChamps(id, it.l)}</span></label>` + (it.sub ? `<div class="rm-sub">${it.sub.map(x => rmLigne(sec, x, it.i)).join('')}</div>` : '');
 }
-function rmSection(titre, sec, items){ return items && items.length ? `<div class="rm-sec"><h4>${titre}</h4><div>${items.map(it => rmLigne(sec, it)).join('')}</div></div>` : ''; }
+function rmSection(titre, sec, items){ return items && items.length ? `<div class="rm-sec ${sec === 'moyens' ? 'rm-moy' : ''}"><h4>${titre}</h4><div>${items.map(it => rmLigne(sec, it)).join('')}</div></div>` : ''; }
 function rmForm(){
   const T = RM_TYPES[rmType], c = radioCfg();
   if (!rmV._date) rmNouveau();
@@ -6410,7 +6470,7 @@ function rmForm(){
           `<label class="text-xs font-semibold text-ink-500 flex flex-col gap-1">${l}<input class="sel" ${k === '_date' ? 'type="datetime-local"' : ''} ${im ? `inputmode="${im}"` : ''} style="${st}" data-k="${k}" value="${esc(rmV[k] != null ? rmV[k] : k === '_dest' ? c.dest : k === '_orig' ? c.orig : k === '_num' ? rmNumSuivant() : '')}" oninput="rmSaisie(this)"></label>`).join('')}</div>
       ${rmSection('Je SUIS', 'suis', T.suis)}
       <div class="rm-cols">${rmSection('Je VOIS : « en présence de »', 'vois', T.vois)}<div class="space-y-4">${rmSection('Je FAIS : « procédons à »', 'fais', T.fais)}${rmSection('Je PRÉVOIS', 'prevois', T.prevois)}</div>
-        <div class="space-y-4">${rmSection('Je DEMANDE', 'demande', T.demande)}${rmSection('Moyens sur les lieux', 'moyens', T.moyens)}</div></div>
+        <div class="space-y-4">${rmSection('Je DEMANDE', 'demande', T.demande)}${rmSection('Moyens et autorités sur les lieux', 'moyens', T.moyens)}</div></div>
       ${T.bilan ? `<div class="rm-sec"><h4>Bilan</h4><div class="rm-bil">${RM_BILAN.map(([k, l]) => `<label><input class="sel" inputmode="numeric" data-k="b.${k}" value="${esc(rmV['b.' + k] || '')}" oninput="rmSaisie(this)">${l}</label>`).join('')}</div></div>` : ''}
       ${rmSection(rmType === 'SR' ? 'Commandement' : 'Suite de l’opération', 'fin', T.fin)}</div>
     <div class="card p-4"><h3 class="font-semibold mb-2">Message à transmettre</h3><div id="rm-prev" class="rm-prev"></div>
@@ -6427,34 +6487,52 @@ function rmSaisie(el){
   rmApercu();
 }
 function rmCoche(el){ rmV[el.dataset.c] = el.checked; if (!el.checked) delete rmV[el.dataset.c]; rmApercu(); }
-// ---- rédaction du message ----
-function rmRemplir(id, lbl){ let i = 0; return lbl.replace(/\{([^}]*)\}/g, () => (rmV[id + '.' + (i++)] || '').trim()); }
-function rmNettoie(t){ return t.replace(/\(\s*(raison\s*:\s*)?\)/g, '').replace(/\(\s*raison\s*:\s*([^)]*)\)/g, '(raison : $1)').replace(/\s+([,.)])/g, '$1').replace(/\(\s+/g, '(').replace(/\s{2,}/g, ' ').replace(/\s*:\s*$/, '').replace(/\s*,\s*$/, '').trim(); }
-function rmItems(sec, items, parent){
-  const out = [];
-  (items || []).forEach(([id0, lbl, sub]) => {
-    if (id0 === '#' || id0 === '!') return;
-    const libre = id0.startsWith('='), id = sec + '.' + (parent ? parent + '.' : '') + id0.replace('=', '');
-    const champs = (lbl.match(/\{/g) || []).length, rempli = [...Array(champs).keys()].some(i => (rmV[id + '.' + i] || '').trim());
-    const enf = sub ? rmItems(sec, sub, id0) : [];
-    if ((libre && rempli) || (!libre && rmV[id]) || enf.length) { let t = rmNettoie(rmRemplir(id, lbl)); if (enf.length) t = (t + (/:\s*$/.test(lbl) ? ' : ' : ', ') + enf.join(', ')).replace(/^\s*[:,]\s*/, ''); out.push(t); }
+// ---- rédaction : des phrases construites ----
+function rmVals(id, it){ const n = (it.l.match(/\{/g) || []).length; return [...Array(n).keys()].map(i => (rmV[id + '.' + i] || '').trim()); }
+function rmSortie(sec, items, parent){   // → {f: fragments, p: phrases autonomes}
+  const f = [], p = [];
+  (items || []).forEach(it => {
+    if (!it.i) return;
+    const id = sec + '.' + (parent ? parent + '.' : '') + it.i, v = rmVals(id, it), rempli = v.some(Boolean);
+    const enf = it.sub ? rmSortie(sec, it.sub, it.i) : {f: [], p: []}, e = enf.f.concat(enf.p);
+    if (!((it.lib && rempli) || (!it.lib && rmV[id]) || e.length)) return;
+    let t = typeof it.o === 'function' ? it.o(v, e) : (it.o || it.l);
+    t = String(t || '').replace(/\s{2,}/g, ' ').replace(/\s+([,.)])/g, '$1').trim(); if (!t || t === '.') return;
+    (it.s ? p : f).push(t);
   });
-  return out;
+  return {f, p};
 }
+const rmMaj = t => t ? t.charAt(0).toUpperCase() + t.slice(1) : t;
 function rmTexte(){
   const T = RM_TYPES[rmType], c = radioCfg(), L = [];
-  const dest = (rmV._dest != null ? rmV._dest : c.dest) || 'CODIS', orig = (rmV._orig != null ? rmV._orig : c.orig) || '';
+  const dest = (rmV._dest != null && rmV._dest !== '' ? rmV._dest : c.dest) || 'CODIS 33', orig = (rmV._orig != null && rmV._orig !== '' ? rmV._orig : c.orig) || '';
   const num = rmV._num != null && rmV._num !== '' ? rmV._num : rmNumSuivant();
-  L.push(`${dest} de ${orig}, message ${T.court} n° ${num}${rmV._codis ? ', opération CODIS n° ' + rmV._codis : ''}.`);
-  const sec = (k, titre, avant) => { const it = rmItems(k, T[k]); if (it.length) L.push(`${titre} ${avant || ''}${it.join(' ; ')}.`.replace(/\s+\./, '.').replace('..', '.')); };
-  sec('suis', 'Je suis :', ''); sec('vois', 'Je vois :', 'en présence de '); sec('fais', 'Je fais :', 'procédons à '); sec('prevois', 'Je prévois :', ''); sec('demande', 'Je demande :', ''); sec('moyens', 'Moyens sur les lieux :', '');
-  if (T.bilan) { const b = k => (rmV['b.' + k] || '').trim(), p = [];
-    if (b('conc')) p.push(b('conc') + ' personne(s) concernée(s)'); if (b('vict')) p.push(b('vict') + ' victime(s)' + (b('impl') ? ' dont ' + b('impl') + ' impliqué(s)' : '')); else if (b('impl')) p.push(b('impl') + ' impliqué(s)');
-    if (b('bl')) p.push(b('bl') + ' blessé(s) léger(s)'); if (b('bg')) p.push(b('bg') + ' blessé(s) grave(s)'); if (b('dcd')) p.push(b('dcd') + ' DCD');
-    if (p.length) L.push('Bilan : ' + p.join(', ') + '.'); }
-  const f = rmItems('fin', T.fin); if (f.length) L.push(f.map(x => x.charAt(0).toUpperCase() + x.slice(1)).join('. ') + '.');
-  L.push('PARLEZ.');
-  return L.join('\n').replace(/\bde (un|une|ou)\b/g, 'd’$1').replace(/\bde (a|à) /g, 'de $1 ');
+  L.push(`${dest} de ${orig}, prenez message ${T.court} n° ${num}${rmV._codis ? ', opération CODIS n° ' + rmV._codis : ''}.`);
+  const S = k => rmSortie(k, T[k]);
+  // Je suis
+  const su = S('suis'); L.push(su.f.length ? `Je suis ${su.f.join(', ')} – changement d’adresse.` : 'Je suis à l’adresse indiquée.');
+  // Je vois
+  const vo = S('vois'); if (vo.f.length) L.push(`Je vois ${rmL(vo.f)}.`); vo.p.forEach(x => L.push(x));
+  // Bilan
+  if (T.bilan) { const b = k => (rmV['b.' + k] || '').trim(), q = [];
+    if (b('conc')) q.push(+b('conc') > 1 ? b('conc') + ' personnes concernées' : 'une personne concernée');
+    if (b('vict')) q.push(rmUn(b('vict'), 'victime', 1) + (b('impl') ? ' dont ' + b('impl') + (+b('impl') > 1 ? ' impliquées' : ' impliquée') : ''));
+    else if (b('impl')) q.push(b('impl') + (+b('impl') > 1 ? ' impliqués' : ' impliqué'));
+    if (b('bl')) q.push(+b('bl') > 1 ? b('bl') + ' blessés légers' : 'un blessé léger'); if (b('bg')) q.push(+b('bg') > 1 ? b('bg') + ' blessés graves' : 'un blessé grave');
+    if (b('dcd')) q.push(+b('dcd') > 1 ? b('dcd') + ' personnes décédées' : 'une personne décédée');
+    if (q.length) L.push('Bilan provisoire : ' + rmL(q) + '.'); }
+  // Je fais
+  const fa = S('fais'); if (fa.f.length) L.push(`Je fais : nous procédons ${rmL(fa.f)}.`); fa.p.forEach(x => L.push(x));
+  // Je prévois
+  if (T.prevois) { const pr = S('prevois'); if (pr.f.length) L.push(`Je prévois ${rmL(pr.f)}.`); pr.p.forEach(x => L.push(x)); }
+  // Je demande
+  const de = S('demande'); if (de.f.length) L.push(`Je demande ${rmL(de.f)}.`); de.p.forEach(x => L.push(x));
+  // Moyens et autorités sur les lieux
+  const mo = S('moyens'); if (mo.f.length) L.push(`${rmMaj(rmL(mo.f))} ${mo.f.length > 1 ? 'sont' : 'est'} sur les lieux.`);
+  // Suite
+  const fi = S('fin'); fi.f.concat(fi.p).forEach(x => L.push(rmMaj(x)));
+  L.push(`PARLEZ ${dest}`);
+  return L.join('\n');
 }
 function rmApercu(){ const e = $('rm-prev'); if (e) e.textContent = rmTexte(); }
 function rmCopier(t){ (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(() => showToast('Message copié'), () => { const x = document.createElement('textarea'); x.value = t; document.body.appendChild(x); x.select(); try { document.execCommand('copy'); showToast('Message copié'); } catch (e) {} x.remove(); }); }
