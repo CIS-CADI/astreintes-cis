@@ -6335,10 +6335,11 @@ const RM_SERVICES = [{i: 'gend', l: 'Gendarmerie', o: 'la gendarmerie'}, {i: 'po
   {i: 'vq', l: 'Veille qualifiée', o: 'la veille qualifiée'}, {i: 'enedis', l: 'Enedis', o: 'Enedis'}, {i: 'grdf', l: 'GRDF', o: 'GRDF'}, {i: 'samu', l: 'SAMU 33', o: 'le SAMU 33'},
   {i: 'smur', l: 'SMUR Langon', o: 'le SMUR Langon'}, {i: 'dragon', l: 'Dragon 33', o: 'Dragon 33'}, {i: 'aut', l: 'autre : {précision}', o: v => v[0]}];
 const RM_DEM_TETE = [{i: 'conf', l: 'je confirme les moyens engagés', o: 'Je confirme les moyens engagés.', s: true}, {i: 'suff', l: 'secours suffisants', o: 'Secours suffisants.', s: true}, {h: 'Agrès et services demandés'}];
+const RM_IND = {i: 'ind', l: 'à l’adresse indiquée', o: 'à l’adresse indiquée', s: true};
 const rmPour = (txt) => v => txt + (v[0] ? ' pour ' + v[0] : '');
 const RM_TYPES = {
   SAP: {titre: 'A 8.1 — Message de compte rendu type SAP', court: 'de compte rendu type SAP', bilan: true,
-    suis: [{i: 'adr', l: 'changement d’adresse : {adresse}', o: v => v[0]}],
+    suis: [RM_IND, {i: 'adr', l: 'changement d’adresse : {adresse}', o: v => v[0]}],
     vois: [{i: 'pers', l: '{#nb} personne(s), code victime {code}', o: v => rmUn(v[0], 'personne', 1) + (v[1] ? ', code victime ' + v[1] : '')},
       {i: 'nomb', l: 'de nombreuses victimes ({#nb})', o: v => 'de nombreuses victimes' + (v[0] ? ' (' + v[0] + ')' : '')},
       {i: 'bl', l: 'une personne blessée : {précision}', o: v => 'une personne blessée' + (v[0] ? ' (' + v[0] + ')' : '')},
@@ -6371,7 +6372,7 @@ const RM_TYPES = {
       {i: 'arr', l: 'arrivée au CH {hôpital} à {heure}', s: true, o: v => 'Arrivée au CH ' + (v[0] || '') + (v[1] ? ' à ' + v[1] : '') + '.'},
       {i: 'att', l: 'VSAV en attente d’admission au CH {hôpital} ({motif}) depuis 30 minutes', s: true, o: v => 'VSAV en attente d’admission au CH ' + (v[0] || '') + ' depuis 30 minutes' + (v[1] ? ', motif : ' + v[1] : '') + '.'}]},
   SR: {titre: 'A 8.2 — Message type secours routier', court: 'type secours routier', bilan: true,
-    suis: [{i: 'adr', l: 'changement d’adresse : {adresse}', o: v => v[0]}, {i: 'com', lib: true, l: 'commune : {commune}', o: v => 'commune de ' + v[0]}, {i: 'ld', lib: true, l: 'lieu-dit : {lieu-dit}', o: v => 'lieu-dit ' + v[0]},
+    suis: [RM_IND, {i: 'adr', l: 'changement d’adresse : {adresse}', o: v => v[0]}, {i: 'com', lib: true, l: 'commune : {commune}', o: v => 'commune de ' + v[0]}, {i: 'ld', lib: true, l: 'lieu-dit : {lieu-dit}', o: v => 'lieu-dit ' + v[0]},
       {i: 'aut', l: 'autoroute / RD {n°}, sens {sens}, PR {PR}', o: v => 'sur ' + (v[0] ? (/^\d/.test(v[0]) ? 'la RD ' + v[0] : /^A\s?\d/i.test(v[0]) ? 'l’' + v[0] : /^(RD|RN|D|N)\s?\d/i.test(v[0]) ? 'la ' + v[0] : v[0]) : 'l’axe') + (v[1] ? ' sens ' + v[1] : '') + (v[2] ? ' au PR ' + v[2] : '')},
       {i: 'ech', l: 'entre l’échangeur {échangeur} et l’échangeur {échangeur}', o: v => 'entre l’échangeur ' + (v[0] || '') + ' et l’échangeur ' + (v[1] || '')},
       {i: 'roc', l: 'rocade de Bordeaux, sens {intérieur / extérieur}, entre l’échangeur {échangeur} et l’échangeur {échangeur}', o: v => 'sur la rocade de Bordeaux' + (v[0] ? ' sens ' + v[0] : '') + (v[1] || v[2] ? ', entre l’échangeur ' + (v[1] || '') + ' et l’échangeur ' + (v[2] || '') : '')}],
@@ -6402,7 +6403,7 @@ const RM_TYPES = {
       {i: 'voi', l: 'service de la voirie (raison : {raison})', o: rmPour('le service de la voirie')}, {i: 'novi', l: 'moyens NOVI', o: 'les moyens NOVI'}, {i: 'aut', l: 'autres : {précision}', o: v => v[0]}]),
     fin: [{i: 'cos', l: 'je prends l’appellation « COS {nom} » (à partir du niveau 1 de commandement)', s: true, o: v => 'Je prends l’appellation « COS ' + (v[0] || '') + ' ».'}]},
   DIV: {titre: 'A 8.5 — Message type opérations diverses', court: 'type opérations diverses', bilan: false,
-    suis: [{i: 'adr', l: 'changement d’adresse : {adresse}', o: v => v[0]}],
+    suis: [RM_IND, {i: 'adr', l: 'changement d’adresse : {adresse}', o: v => v[0]}],
     vois: [{i: 'mf', l: 'mauvais fonctionnement de {quoi}', o: v => 'un mauvais fonctionnement' + (v[0] ? ' de ' + v[0] : '')}, {i: 'cc', l: 'court-circuit {intérieur / extérieur, précision}', o: v => 'un court-circuit' + (v[0] ? ' ' + v[0] : '')},
       {h: 'Chute d’objets'}, {i: 'cab', l: 'câble tombé : {HTA / HTB / MT / BT / téléphonique / autre}', o: v => 'un câble ' + (v[0] ? v[0] + ' ' : '') + 'tombé'},
       {i: 'obj', l: 'objet menaçant de tomber / risque d’effondrement sur {VP / bâtiment} : {précision}', o: v => 'un objet menaçant de tomber avec risque d’effondrement' + (v[0] ? ' sur ' + v[0] : '') + (v[1] ? ' (' + v[1] + ')' : '')},
@@ -6440,7 +6441,12 @@ const RM_TYPES = {
 Object.values(RM_TYPES).forEach(T => { T.moyens = RM_SERVICES; });
 const RM_BILAN = [['conc', 'concernées'], ['vict', 'victimes'], ['impl', 'impliqués'], ['bl', 'blessés légers'], ['bg', 'blessés graves'], ['dcd', 'DCD']];
 let rmOng = 'gen', rmType = 'SAP', rmV = {}, rmEditId = null, rmHistF = '', rmHistQ = '', rmHistMoi = false, rmOuvert = {};
-function rmNouveau(){ const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); rmV = {_date: d.toISOString().slice(0, 16)}; rmEditId = null; }
+function rmNouveau(){ const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); rmV = {_date: d.toISOString().slice(0, 16), 'suis.ind': true}; rmEditId = null; }
+function rmExclu(id){   // « à l'adresse indiquée » exclut tout changement d'adresse, et inversement
+  if (!id || !id.startsWith('suis.') || !rmV[id]) return;
+  const off = k => { delete rmV[k]; const b = document.querySelector(`#rm-corps input[data-c="${k}"]`); if (b) b.checked = false; };
+  if (id === 'suis.ind') Object.keys(rmV).filter(k => /^suis\.[^.]+$/.test(k) && k !== 'suis.ind').forEach(off); else off('suis.ind');
+}
 function rmBarre(){ const n = Object.keys(data.rmsg || {}).length;
   return `<div class="card p-3"><div class="rm-tabs">${[['gen', 'Générateur rapide'], ['type', 'Messages types SAP · SR · DIV'], ['hist', `Historique (${n})`]].map(([k, l]) => `<button class="${rmOng === k ? 'on' : ''}" onclick="rmOng='${k}';ouvrirRadio()">${l}</button>`).join('')}</div></div>`; }
 function rmRendre(){
@@ -6478,15 +6484,16 @@ function rmForm(){
         <button class="btn btn-light" onclick="if(confirm('Effacer le formulaire ?')){rmNouveau();rmForm();}">Nouveau message</button></div></div>`;
   $('rm-corps').innerHTML = h; rmApercu();
 }
-function rmChoisir(k){ if (k === rmType) return; const garde = {_date: rmV._date, _codis: rmV._codis, _dest: rmV._dest, _orig: rmV._orig}; rmType = k; rmV = garde; rmEditId = null; rmForm(); }
+function rmChoisir(k){ if (k === rmType) return; const garde = {_date: rmV._date, _codis: rmV._codis, _dest: rmV._dest, _orig: rmV._orig, 'suis.ind': rmV['suis.ind']}; rmType = k; rmV = garde; rmEditId = null; rmForm(); }
 function rmNumSuivant(){ const L = Object.values(data.rmsg || {}).filter(m => m && m.type === rmType && rmV._codis && m.codis === rmV._codis); return L.length + 1; }
 function rmSaisie(el){
   rmV[el.dataset.k] = el.value;
+  if (el.value.trim() && /^suis\.(?!ind)/.test(el.dataset.k || '')) { const k = el.dataset.k.replace(/\.\d+$/, ''); if (!el.dataset.ck || !document.querySelector(`#rm-corps input[data-c="${el.dataset.ck}"]`)) { rmV[k] = rmV[k] || 1; rmExclu(k); if (rmV[k] === 1) delete rmV[k]; } }
   const ck = el.dataset.ck, box = ck ? document.querySelector(`#rm-corps input[data-c="${ck}"]`) : null;
-  if (box && el.value.trim() && !box.checked) { box.checked = true; rmV[ck] = true; }
+  if (box && el.value.trim() && !box.checked) { box.checked = true; rmV[ck] = true; rmExclu(ck); }
   rmApercu();
 }
-function rmCoche(el){ rmV[el.dataset.c] = el.checked; if (!el.checked) delete rmV[el.dataset.c]; rmApercu(); }
+function rmCoche(el){ rmV[el.dataset.c] = el.checked; if (!el.checked) delete rmV[el.dataset.c]; rmExclu(el.dataset.c); rmApercu(); }
 // ---- rédaction : des phrases construites ----
 function rmVals(id, it){ const n = (it.l.match(/\{/g) || []).length; return [...Array(n).keys()].map(i => (rmV[id + '.' + i] || '').trim()); }
 function rmSortie(sec, items, parent){   // → {f: fragments, p: phrases autonomes}
@@ -6510,7 +6517,8 @@ function rmTexte(){
   L.push(`${dest} de ${orig}, prenez message ${T.court} n° ${num}${rmV._codis ? ', opération CODIS n° ' + rmV._codis : ''}.`);
   const S = k => rmSortie(k, T[k]);
   // Je suis
-  const su = S('suis'); L.push(su.f.length ? `Je suis ${su.f.join(', ')} – changement d’adresse.` : 'Je suis à l’adresse indiquée.');
+  const su = S('suis'), ind = su.p.length;
+  if (ind) L.push(`Je suis à l’adresse indiquée${su.f.length ? ', ' + su.f.join(', ') : ''}.`); else if (su.f.length) L.push(`Je suis ${su.f.join(', ')} – changement d’adresse.`);
   // Je vois
   const vo = S('vois'); if (vo.f.length) L.push(`Je vois ${rmL(vo.f)}.`); vo.p.forEach(x => L.push(x));
   // Bilan
